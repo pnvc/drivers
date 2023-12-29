@@ -257,10 +257,9 @@ static int scull_init(void)
 	if (rd < 0)
 		return rd;
 	reg_cdev();
-	printk(KERN_DEBUG "Here I am: %s:%i\n", __FILE__, __LINE__);
-	printk(KERN_CRIT "I'm trashed; giving up on\n");
-	printk(KERN_NOTICE "scull: started\n");
-	PDEBUG("scull: hehehehehehehhehehehehehhehe %s\n", "kek");
+	printk(KERN_DEBUG "scull: i'm here: %s:%i\n", __FILE__, __LINE__);
+	PDEBUG("scull: PDEBUG macro test %s\n", "kek");
+	pr_info("scull: started");
 	return 0;
 }
 

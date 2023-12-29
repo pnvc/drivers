@@ -3,13 +3,13 @@
 
 #undef PDEBUG
 #ifdef SCULL_DEBUG
-	#ifdef __KERNEL__
-		#define PDEBUG(fmt, ...) printk(KERN_DEBUG "scull: " fmt, ##__VA_ARGS__)
-	#else
-		#define PDEBUG(fmt, ...) fprintf(stderr, fmt, ##__VA_ARGS__)
-	#endif /* __KERNEL__ */
+#	ifdef __KERNEL__
+#		define PDEBUG(fmt, ...) printk(KERN_DEBUG "scull: " fmt, ##__VA_ARGS__)
+#	else
+#		define PDEBUG(fmt, ...) fprintf(stderr, fmt, ##__VA_ARGS__)
+#	endif /* __KERNEL__ */
 #else
-	#define PDEBUG(fmt, args...)
+#	define PDEBUG(fmt, args...)
 #endif /* SCULL_DEBUG */
 
 struct scull_qset {
