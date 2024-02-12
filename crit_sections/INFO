@@ -1,0 +1,6 @@
+Semaphores:
+	like mutexes
+	reader/writer (only if write shortly, otherwise readers starvation is coming :))
+	completions (awaiting completion of the out of thread)
+		it is possible to make completion for the all awaiting threads (complete_all(struct completion *))
+	spinlocks

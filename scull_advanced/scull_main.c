@@ -7,13 +7,18 @@
 #include <linux/cdev.h>
 #include <asm/uaccess.h>
 #include <linux/proc_fs.h>
+#include <linux/ioctl.h>
+#include <linux/sched.h>
 #include "scull_main.h"
+
+#define SCULL_QUANTUM 	4000
+#define SCULL_QSET	1000
 
 static int scull_major = 0;
 static int scull_minor = 0;
 static int scull_nr_devs = 4;
-static int scull_quantum = 4000;
-static int scull_qset = 1000;
+static int scull_quantum = SCULL_QUANTUM;
+static int scull_qset = SCULL_QSET;
 static char *scull_name = "scull";
 module_param(scull_major, int, S_IRUGO);
 module_param(scull_minor, int, S_IRUGO);
@@ -38,9 +43,9 @@ static struct file_operations scull_fops = {
 	.llseek = scull_llseek,
 	.read = scull_read,
 	.write = scull_write,
-/*	.ioctl = scull_ioctl,*/
 	.open = scull_open,
 	.release = scull_release,
+	.unlocked_ioctl = ioctl,
 };
 
 static int reg_dev(void)
@@ -84,7 +89,7 @@ static int scull_trim(void)
 	int qset = scull_qset;
 	int i, j;
 
-	for (i = 0; i < 4; i++) {
+	for (i = 0; i < scull_nr_devs; i++) {
 		for (dptr = d.node[i].data; dptr; dptr = next) {
 			if (dptr->data) {
 				for (j = 0; j < qset; j++)
@@ -282,64 +287,99 @@ static loff_t scull_llseek(struct file *f, loff_t off, int whence)
 	f->f_pos = newpos;
 	return newpos;
 }
+/*
+ * S 'set'
+ * T 'tell'
+ * G 'get' by pointer
+ * Q 'query' by return value
+ * X 'eXchange' switch S and G atomically
+ * H 'sHift' switch T and Q atomically
+ */
+#define SCULL_IOC_MN 0xC7
 
-/* deprecated ? use seq_file
-static const struct proc_ops read_proc(char *page, char **start, off_t offset, int count,
-		int *eof, void *data)
+#define SCULL_IOCRESET		_IO(SCULL_IOC_MN, 0)
+#define SCULL_IOCSQUANTUM	_IOW(SCULL_IOC_MN, 1, int)
+#define SCULL_IOCSQSET		_IOW(SCULL_IOC_MN, 2, int)
+#define SCULL_IOCTQUANTUM	_IO(SCULL_IOC_MN, 3)
+#define SCULL_IOCTQSET		_IO(SCULL_IOC_MN, 4)
+#define SCULL_IOCGQUANTUM	_IOR(SCULL_IOC_MN, 5, int)
+#define SCULL_IOCGQSET		_IOR(SCULL_IOC_MN, 6, int)
+#define SCULL_IOCQQUANTUM	_IO(SCULL_IOC_MN, 7)
+#define SCULL_IOCQQSET		_IO(SCULL_IOC_MN, 8)
+#define SCULL_IOCXQUANTUM	_IOWR(SCULL_IOC_MN, 9, int)
+#define SCULL_IOCXQSET		_IOWR(SCULL_IOC_MN, 10, int)
+#define SCULL_IOCHQUANTUM	_IO(SCULL_IOC_MN, 11)
+#define SCULL_IOCHQSET		_IO(SCULL_IOC_MN, 12)
+
+#define SCULL_IOC_MAXNR 12
+
+
+static long ioctl(struct file *fp,
+		unsigned int cmd, unsigned long arg)
 {
-	struct scull_dev *sd = &d;
-	struct scull_qset *sq = sd->data;
-	int j, len = 0;
-	int limit = count - 80;
+	int err = 0, tmp;
+	int retval;
 
-	len += sprintf(page + len, "\nscull: qset %i, q %i, sz %i\n",
-			sd->qset, sd->quantum, sd->size);
+	/* check type and command number with masks */
+	if (_IOC_TYPE(cmd) != SCULL_IOC_MN)
+		return -ENOTTY;
+	if (_IOC_NR(cmd) > SCULL_IOC_MAXNR)
+		return -ENOTTY;
 
-	for (; sq && len <= limit; sq = sq->next) {
-		len += sprintf(page + len, "   item at %p, qset at %p\n",
-				sq, sq->data);
-		if (sq->data && !sq->next)
-			for (j = 0; j < sd->qset; j++) {
-				if (sq->data[j])
-					len += sprintf(page + len, "    % 4i: %8p\n",
-							j, sq->data[j]);
-			}
+	if (_IOC_DIR(cmd) & _IOC_READ || _IOC_DIR(cmd) & _IOC_WRITE)
+		err = !access_ok((void __user *)arg, _IOC_SIZE(cmd));
+	if (err)
+		return -EFAULT;
+
+	switch (cmd) {
+
+	case SCULL_IOCRESET:
+		scull_quantum = SCULL_QUANTUM;
+		scull_qset = SCULL_QSET;
+		break;
+
+	case SCULL_IOCSQUANTUM:
+		if (!capable(CAP_SYS_ADMIN))
+			return -EPERM;
+		retval = __get_user(scull_quantum, (int __user *)arg);
+		break;
+
+	case SCULL_IOCTQUANTUM:
+		if (!capable(CAP_SYS_ADMIN))
+			return -EPERM;
+		scull_quantum = arg;
+		break;
+
+	case SCULL_IOCGQUANTUM:
+		retval = __put_user(scull_quantum, (int __user *)arg);
+		break;
+
+	case SCULL_IOCQQUANTUM:
+		return scull_quantum;
+		break;
+
+	case SCULL_IOCXQUANTUM:
+		if (!capable(CAP_SYS_ADMIN))
+			return -EPERM;
+		tmp = scull_quantum;
+		retval = __get_user(scull_quantum, (int __user *)arg);
+		if (retval == 0)
+			retval = __put_user(tmp, (int __user *)arg);
+		break;
+
+	case SCULL_IOCHQUANTUM:
+		if (!capable(CAP_SYS_ADMIN))
+			return -EPERM;
+		tmp = scull_quantum;
+		scull_quantum = arg;
+		return tmp;
+
+	default:
+		return -ENOTTY;
 	}
-	*eof = 1;
-	return len;
 
+	return retval;
 }
-static ssize_t proc_read(struct file *fl, char __user *ub, size_t ss, loff_t *t)
-{
-	if (*t == 5)
-		return 0;
-	pr_info("asd: %lu\n", ss);
-	copy_to_user(ub, "asdf\n", 5);
-	*t = 5;
-	return 5;
-}
-
-static struct proc_ops po = {
-	.proc_read = proc_read
-};
-*/
-
-/* seq_file
-static void* scull_seq_start(struct seq_file *s, loff_t *pos)
-{
-	if (*pos >= scull_nr_devs)
-		return NULL;
-	return scull_devices + *pos;
-}
-
-static void* scull_seq_next(struct seq_file *s, void *v, loff_t *pos)
-{
-	(*pos)++;
-	if (*pos >= scull_nr_devs)
-		return NULL;
-	return scull_devices + *pos;
-}
-*/
 
 static int scull_init(void)
 {
@@ -347,22 +387,17 @@ static int scull_init(void)
 	if (rd < 0)
 		return rd;
 	reg_cdev();
-	/* seq_file instead proc_create("driver/scullmem", 0, NULL, &po); */
-	printk(KERN_DEBUG "scull: i'm here: %s:%i\n", __FILE__, __LINE__);
-	PDEBUG("scull: PDEBUG macro test %s\n", "kek");
 	pr_info("scull: started");
 	return 0;
 }
 
 static void scull_exit(void)
 {
-	for (int i = 0; i < 4; i++)
+	for (int i = 0; i < scull_nr_devs; i++)
 		cdev_del(&d.node[i].cdev);
 	unregister_chrdev_region(d.dev, scull_nr_devs);
 	scull_trim();
-	remove_proc_entry("driver/scullmem", NULL);
 	printk(KERN_NOTICE "scull: closed\n");
-
 }
 
 module_init(scull_init);

@@ -46,17 +46,7 @@ static ssize_t scull_write(struct file *filp, const char __user *buf,
 	size_t count, loff_t *offp);
 static loff_t scull_llseek(struct file*, loff_t, int);
 
-/* deprecated ? use seq_file
-static const struct proc_ops read_proc(char *page, char **start, off_t offset, int count,
-		int *eof, void *data);
-
-static ssize_t proc_read(struct file *, char __user *, size_t, loff_t *);
-*/
-
-/* seq file */
-static void* scull_seq_start(struct seq_file *s, loff_t *pos);
-static void* scull_seq_next(struct seq_file *s, void *v, loff_t *pos);
-static void  scull_seq_stop(struct seq_file *s, void *v);
-static void* scull_seq_show(void);
+/* ioctl */
+static long ioctl(struct file *, unsigned int, unsigned long);
 
 #endif /* _SCULL_MAIN_H */

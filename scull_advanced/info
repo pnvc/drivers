@@ -1,0 +1,33 @@
+#include <linux/types.h>
+#include <linux/kdev_t.h>
+
+MAJOR(dev_t dev);
+MINOR(dev_t dev);
+MKDEV(major, minor);
+
+----------------------------------------
+
+#include <linux/fs.h>
+
+int register_chrdev_region(dev_t first, unisgned int count, char *name);
+int alloc_chrdev_region(dev_t *dev, unsigned int firstminor, unsigned int count, char *name);
+
+void unregister_chrdev_region(dev_t first, unsigned int count);
+
+FILES:
+
+struct file_operations;
+struct file;
+struct inode;
+
+----------------------------------------
+
+#include <linux/cdev.h>
+
+struct cdev *my_cdev = cdev_alloc();
+my_cdev->ops = &my_fops;
+
+void cdev_init(struct cdev *cdev, struct file_operations *fops);
+int cdev_add(struct cdev *cdev, struct file_operations *fops);
+void cdev_del(struct cdev *cdev);
+

@@ -1,0 +1,9 @@
+#!/bin/bash
+
+for ((;;)) do
+	dd if=/dev/zero of=/dev/scull0 bs=2K count=1;
+	dd if=/dev/zero of=/dev/scull1 bs=2K count=1;
+	dd if=/dev/zero of=/dev/scull2 bs=2K count=1;
+	dd if=/dev/zero of=/dev/scull3 bs=2K count=1;
+	sleep 0.001;
+done
