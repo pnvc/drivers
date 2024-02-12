@@ -180,9 +180,9 @@ static ssize_t scull_write(struct file *filp, const char __user *buf,
 	int qset = dev->qset;
 	int itemsize = quantum * qset;
 	int item, s_pos, q_pos, rest;
+	ssize_t retval = -ENOMEM;
 
 	*f_pos = dev->general_offset;
-	ssize_t retval = -ENOMEM;
 
 	if (count >= itemsize << 1)
 		goto out;
@@ -306,6 +306,7 @@ static loff_t scull_llseek(struct file *f, loff_t off, int whence)
  * X 'eXchange' switch S and G atomically
  * H 'sHift' switch T and Q atomically
  */
+
 #define SCULL_IOC_MN 0xC7
 
 #define SCULL_IOCRESET		_IO(SCULL_IOC_MN, 0)
