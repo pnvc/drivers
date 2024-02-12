@@ -9,6 +9,7 @@
 #include <linux/proc_fs.h>
 #include <linux/ioctl.h>
 #include <linux/sched.h>
+#include <linux/wait.h>
 #include "scull_main.h"
 
 #define SCULL_QUANTUM 	4000
@@ -119,6 +120,9 @@ static int scull_release(struct inode *inode, struct file *filp)
 	return 0;
 }
 
+static DECLARE_WAIT_QUEUE_HEAD(wq);
+static int flag = 0;
+
 static ssize_t scull_read(struct file *filp, char __user *buf,
 	size_t count, loff_t *f_pos)
 {
@@ -130,6 +134,9 @@ static ssize_t scull_read(struct file *filp, char __user *buf,
 	unsigned long itemsize = quantum * qset;
 	
 	ssize_t retval = 0;
+
+	wait_event_interruptible(wq, flag);
+	flag = 0;
 
 	if (down_interruptible(&scd->sem))
 		return -ERESTARTSYS;
@@ -216,6 +223,9 @@ static ssize_t scull_write(struct file *filp, const char __user *buf,
 		goto out;
 	}
 
+	flag = 1;
+	wake_up_interruptible(&wq);
+
 	retval = count;
 	dev->general_offset += count;
 
@@ -287,6 +297,7 @@ static loff_t scull_llseek(struct file *f, loff_t off, int whence)
 	f->f_pos = newpos;
 	return newpos;
 }
+
 /*
  * S 'set'
  * T 'tell'
