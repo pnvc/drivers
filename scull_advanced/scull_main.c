@@ -14,13 +14,17 @@
 
 #define SCULL_QUANTUM 	4000
 #define SCULL_QSET	1000
+#define SCULL_NR_DEVS	4
+#define SCULL_MAJOR	0
+#define SCULL_MINOR	0
+#define SCULL_NAME	"scull"
 
-static int scull_major = 0;
-static int scull_minor = 0;
-static int scull_nr_devs = 4;
+static int scull_major = SCULL_MAJOR;
+static int scull_minor = SCULL_MINOR;
+static int scull_nr_devs = SCULL_NR_DEVS;
 static int scull_quantum = SCULL_QUANTUM;
 static int scull_qset = SCULL_QSET;
-static char *scull_name = "scull";
+static char *scull_name = SCULL_NAME;
 module_param(scull_major, int, S_IRUGO);
 module_param(scull_minor, int, S_IRUGO);
 module_param(scull_nr_devs, int, S_IRUGO);
