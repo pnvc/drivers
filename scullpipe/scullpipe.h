@@ -11,11 +11,24 @@ struct scullpipe {
 	struct semaphore sem;
 	dev_t dev;
 	struct cdev cdev;
+	struct file_operations fops;
+	struct class *dev_class;
 };
 
 static int reg_dev(void);
 static int reg_cdev(void);
+static int create_class_and_node(void);
+static void init_sema_and_queue(void);
+static int kmalloc_buf(void);
 
-static int set_bufsize(const char *, const struct kernel_param *);
+static int param_set_bufsize(const char *, const struct kernel_param *);
+
+static int spacefree(struct scullpipe *);
+static int getwritespace(struct scullpipe *, struct file *);
+
+static int sp_open(struct inode *, struct file *);
+static int sp_release(struct inode *, struct file *);
+static ssize_t sp_read(struct file *, char __user *, size_t, loff_t *);
+static ssize_t sp_write(struct file *, const char __user *, size_t, loff_t *);
 
 #endif
