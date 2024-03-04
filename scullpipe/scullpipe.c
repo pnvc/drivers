@@ -237,10 +237,26 @@ static ssize_t sp_read(struct file *filp, char __user *user_buf,
 
 	/* no data */
 	while (sppd->rp == sppd->wp) {
+		DEFINE_WAIT(wait);
 		up(&sppd->sem);
 		if (filp->f_flags & O_NONBLOCK)
 			return -EAGAIN;
 		pr_info(SPMES SP ": [%s] sleeps\n", "reading: going to sleep", current->comm);
+
+		/*
+		 * exclusive wait:
+		 * every exclusive process woke up by principle FIFO
+		 * and every nonexclusive process (if there are they)
+		 * will be woke up and just one (first in the queue)
+		 * exclusive waiter
+		 */
+		/*prepare_to_wait_exclusive(&sppd->inq, &wait, TASK_INTERRUPTIBLE);
+		if (sppd->rp == sppd->wp)
+			schedule();
+		finish_wait(&sppd->inq, &wait);
+		if (signal_pending(current))
+			return -ERESTARTSYS;*/
+
 		if (wait_event_interruptible(sppd->inq, (sppd->rp != sppd->wp)))
 			return -ERESTARTSYS;
 		if (down_interruptible(&sppd->sem))
