@@ -31,4 +31,6 @@ static int sp_release(struct inode *, struct file *);
 static ssize_t sp_read(struct file *, char __user *, size_t, loff_t *);
 static ssize_t sp_write(struct file *, const char __user *, size_t, loff_t *);
 
+static long ioctl(struct file *, unsigned int, unsigned long);
+
 #endif

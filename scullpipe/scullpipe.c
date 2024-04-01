@@ -45,9 +45,10 @@ static struct scullpipe sp = {
 		.open = sp_open,
 		.release = sp_release,
 		.read = sp_read,
-		.write =  sp_write
+		.write =  sp_write,
+		.unlocked_ioctl = ioctl,
 	},
-	.dev_class = NULL
+	.dev_class = NULL,
 };
 
 
@@ -162,6 +163,8 @@ static void init_sema_and_queue(void)
 
 static int kmalloc_buf(void)
 {
+	if (sp.buf)
+		kfree(sp.buf);
 	sp.buf = (char*)kmalloc(sp.bufsize, GFP_KERNEL);
 	if (!sp.buf) {
 		pr_info(SPERR, "kmalloc buf", -ENOMEM);
@@ -332,6 +335,116 @@ static ssize_t sp_write(struct file *filp, const char __user *user_buf,
 	pr_info(SP": %s did write %li bytes\n", current->comm, (long)count);
 
 	return count;
+}
+
+/*
+ * I dont see the number in the ioctl-number.txt
+ * between '|' and 0x80
+ */
+#define SP_IOC_MAGIC			0x0
+
+/*
+ * RESET - set default bufsize
+ * SET - through a ptr
+ * TELL - through an argument (no ptr arg)
+ * GET - through a ptr
+ * QUERY - by return value
+ * SETGET - set and then get by same ptr
+ * TELLQUERY - set through an argument and get prev value
+ */
+
+#define SP_IOC_BUFSIZE_RESET 		_IO   (SP_IOC_MAGIC, 0xA0)
+#define SP_IOC_BUFSIZE_SET		_IOW  (SP_IOC_MAGIC, 0xA1, int)
+#define SP_IOC_BUFSIZE_TELL		_IO   (SP_IOC_MAGIC, 0xA2)
+#define SP_IOC_BUFSIZE_GET		_IOR  (SP_IOC_MAGIC, 0xA3, int)
+#define SP_IOC_BUFSIZE_QUERY		_IO   (SP_IOC_MAGIC, 0xA4)
+#define SP_IOC_BUFSIZE_SETGET		_IOWR (SP_IOC_MAGIC, 0xA5, int)
+#define SP_IOC_BUFSIZE_TELLQUIERY	_IO   (SP_IOC_MAGIC, 0xA6)
+
+#define SP_IOC_MAXNR			0xAF  /* 0xa7 - 0xaf reserved */
+#define SP_IOC_MINNR			0xA0
+
+static long ioctl(struct file *fp, unsigned int cmd, unsigned long arg)
+{
+	int err, tmp;
+	int retval;
+	retval = 0;
+
+	/* check type and command number with masks */
+	if (_IOC_TYPE(cmd) != SP_IOC_MAGIC)
+		return -ENOTTY;
+	if (_IOC_NR(cmd) > SP_IOC_MAXNR || _IOC_NR(cmd) < 0xA0)
+		return -ENOTTY;
+
+	if (_IOC_DIR(cmd) & _IOC_READ || _IOC_DIR(cmd) & _IOC_WRITE)
+		err = !access_ok((void __user *)arg, _IOC_SIZE(cmd));
+	if (err)
+		return -EFAULT;
+
+	if (down_interruptible(&sp.sem))
+		return -ERESTARTSYS;
+
+	switch (cmd) {
+	case SP_IOC_BUFSIZE_RESET:
+		sp.bufsize = DEFBUFSIZE;
+		retval = kmalloc_buf();
+		break;
+	case SP_IOC_BUFSIZE_SET:
+		if (!capable(CAP_SYS_ADMIN)) {
+			retval = -EPERM;
+			break;
+		}
+		retval = __get_user(sp.bufsize, (int __user *)arg);
+		if (retval)
+			break;
+		retval = kmalloc_buf();
+		break;
+	case SP_IOC_BUFSIZE_TELL:
+		if (!capable(CAP_SYS_ADMIN)) {
+			retval = -EPERM;
+			break;
+		}
+		sp.bufsize = arg;
+		retval = kmalloc_buf();
+		break;
+	case SP_IOC_BUFSIZE_GET:
+		retval = __put_user(sp.bufsize, (int __user *)arg);
+		break;
+	case SP_IOC_BUFSIZE_QUERY:
+		retval = sp.bufsize;
+		break;
+	case SP_IOC_BUFSIZE_SETGET:
+		if (!capable(CAP_SYS_ADMIN)) {
+			retval = -EPERM;
+			break;
+		}
+		tmp = sp.bufsize;
+		retval = __get_user(sp.bufsize, (int __user *)arg);
+		if (retval == 0)
+			retval = __put_user(tmp, (int __user *)arg);
+		else
+			break;
+		retval = kmalloc_buf();
+		break;
+	case SP_IOC_BUFSIZE_TELLQUIERY:
+		if (!capable(CAP_SYS_ADMIN)) {
+			retval = -EPERM;
+			break;
+		}
+		tmp = sp.bufsize;
+		sp.bufsize = arg;
+		retval = kmalloc_buf();
+		if (retval)
+			break;
+		retval = tmp;
+		break;
+	default:
+		return -ENOTTY;
+	}
+
+	up(&sp.sem);
+
+	return retval;
 }
 
 static int scullpipe_init(void)
