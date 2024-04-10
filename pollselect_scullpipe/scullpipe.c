@@ -11,6 +11,8 @@
 #include <linux/sched.h>
 #include <linux/wait.h>
 #include <linux/poll.h>
+#include <linux/spinlock.h>
+#include <linux/cred.h>
 
 #include "scullpipe.h"
 
@@ -49,6 +51,7 @@ static struct scullpipe sp = {
 		.write =  sp_write,
 		.unlocked_ioctl = ioctl,
 		.poll = sp_poll,
+		.fasync = sp_fasync,
 	},
 	.dev_class = NULL,
 	.nwriters = 0,
@@ -138,7 +141,8 @@ static int reg_cdev(void)
 
 static int create_class_and_node(void)
 {
-	sp.dev_class = class_create(THIS_MODULE, SP);
+	/*sp.dev_class = class_create(THIS_MODULE, SP);*/
+	sp.dev_class = class_create(SP);
 	if (!sp.dev_class)
 		goto failed_class_create;
 
@@ -217,6 +221,20 @@ static int getwritespace(struct scullpipe *sppd, struct file *filp)
 	return 0;
 }
 
+/*
+ * only one user ever
+ */
+static atomic_t sp_available = ATOMIC_INIT(1);
+
+/*
+ * only uid and euid
+ */
+static DEFINE_SPINLOCK(sp_spinlock);
+static unsigned int sp_u_count = 0;
+static kuid_t sp_u_owner;
+
+
+
 static int sp_open(struct inode *inode, struct file *filp)
 {
 
@@ -224,6 +242,38 @@ static int sp_open(struct inode *inode, struct file *filp)
        
 	sppd = container_of(inode->i_cdev, struct scullpipe, cdev);
 	filp->private_data = sppd;
+	
+	/*
+	 * only one user ever
+	 *
+	if (!atomic_dec_and_test(&sp_available)) {
+		pr_info(SP": sp not available\n");
+		atomic_inc(&sp_available);
+		return -EBUSY;
+	}
+	*/
+
+	/*
+	 * only uid and euid
+	 */
+	const struct cred *cred = current_cred();
+
+	spin_lock(&sp_spinlock);
+	if (sp_u_count &&
+			!uid_eq(sp_u_owner, cred->uid) &&
+			!uid_eq(sp_u_owner, cred->euid) &&
+			!capable(CAP_DAC_OVERRIDE)) {
+		spin_unlock(&sp_spinlock);
+		return -EBUSY;
+	}
+
+	if (sp_u_count == 0)
+		sp_u_owner = cred->uid;
+
+	sp_u_count++;
+	spin_unlock(&sp_spinlock);
+
+
 /*
 	if (!(filp->f_flags & (O_WRONLY | O_RDWR))) {
 		if (sppd->nwriters == 0 && sppd->rp == sppd->wp) {
@@ -251,6 +301,7 @@ static int sp_open(struct inode *inode, struct file *filp)
 static int sp_release(struct inode *inode, struct file *filp)
 {
 	struct scullpipe *sppd = filp->private_data;
+
 	if (filp->f_flags & (O_WRONLY | O_RDWR)) {
 		pr_info(SP": release with O_WRONLY or O_RDWR flag\n");
 		if (down_interruptible(&sppd->sem))
@@ -258,6 +309,23 @@ static int sp_release(struct inode *inode, struct file *filp)
 		sppd->nwriters--;
 		up(&sppd->sem);
 	}
+
+	/* remove this filp from the asynchronously notified filp's */
+	sp_fasync(-1, filp, 0);
+
+	/*
+	 * only one user ever
+	 *
+	atomic_inc(&sp_available);
+	*/
+
+	/*
+	 * only uid and euid
+	 */
+	spin_lock(&sp_spinlock);
+	sp_u_count--;
+	spin_unlock(&sp_spinlock);
+
 	return RETSUCCESS;
 }
 
@@ -496,6 +564,15 @@ static unsigned int sp_poll(struct file *filp, poll_table *wait)
 	up(&dev->sem);
 
 	return mask;
+}
+
+static int sp_fasync(int fd, struct file *filp, int mode)
+{
+	struct scullpipe *sppd = filp->private_data;
+
+	pr_info(SP": %s in fasync :)\n", current->comm);
+
+	return fasync_helper(fd, filp, mode, &sppd->async_queue);
 }
 
 static int scullpipe_init(void)

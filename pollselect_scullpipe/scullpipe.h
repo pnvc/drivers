@@ -35,4 +35,6 @@ static long ioctl(struct file *, unsigned int, unsigned long);
 
 static unsigned int sp_poll(struct file *, poll_table *);
 
+static int sp_fasync(int, struct file *, int);
+
 #endif
