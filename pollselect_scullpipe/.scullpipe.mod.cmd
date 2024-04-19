@@ -1,1 +1,0 @@
-savedcmd_/root/modules/pollselect_scullpipe/scullpipe.mod := printf '%s\n'   scullpipe.o | awk '!x[$$0]++ { print("/root/modules/pollselect_scullpipe/"$$0) }' > /root/modules/pollselect_scullpipe/scullpipe.mod
