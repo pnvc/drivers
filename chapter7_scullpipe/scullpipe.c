@@ -14,6 +14,8 @@
 #include <linux/cred.h>
 #include <linux/sched.h>
 #include <linux/jiffies.h>
+#include <linux/delay.h>
+#include <linux/interrupt.h>
 
 #include "scullpipe.h"
 
@@ -401,23 +403,53 @@ static ssize_t sp_read(struct file *filp, char __user *user_buf,
 static unsigned long j, stamp_1, stamp_half, stamp_n, n = 250;
 static char setted = false;
 
+static void tasklet_pr_info(void)
+{
+	pr_info("TASKLET HAPPEN!\n");
+}
+
 static ssize_t sp_write(struct file *filp, const char __user *user_buf,
 		size_t count, loff_t *offset)
 {
 
 	/* jiffies */
-	j = jiffies;
+	j = jiffies + 5*HZ;
+
+	struct tasklet_struct ts1 = {
+		.func = &tasklet_pr_info,
+		.data = 5*HZ
+	};
+
+	DECLARE_TASKLET(ts2, tasklet_pr_info, 5*HZ);
+
+	/*
+	mdelay(5000000000);
+	mdelay(5000);
+	*/
+
+	/*
+	set_current_state(TASK_INTERRUPTIBLE);
+	schedule_timeout(5*HZ);
+	*/
+	/*
+	wait_queue_head_t w1;
+	init_waitqueue_head(&w1);
+	wait_event_timeout(w1, 0, 5*HZ);
+	*/
+	/*
 	if (!setted) {
 		stamp_1 = j + HZ;
 		stamp_half = j + HZ/2;
 		stamp_n = j + n * HZ / 1000;
 		setted = true;
 	}
+	*/
 	/*
 	pr_info(SP": j %lu, s %lu, hs %lu, n %lu\n", j, stamp_1, stamp_half, stamp_n);
 	pr_info(SP": HZ %i\n", HZ);
 	*/
 
+	/*
 	if (time_after(j, stamp_half)) {
 		pr_info(SP": HALF SEC  _________________________________________________________________________________\n");
 	}
@@ -427,6 +459,8 @@ static ssize_t sp_write(struct file *filp, const char __user *user_buf,
 		setted = 0;
 		return 1;
 	}
+	*/
+
 
 	/* also exists
 	 * time_after_eq (>=)
