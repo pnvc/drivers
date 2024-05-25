@@ -225,11 +225,6 @@ static int getwritespace(struct scullpipe *sppd, struct file *filp)
 }
 
 /*
- * only one user ever
- */
-static atomic_t sp_available = ATOMIC_INIT(1);
-
-/*
  * only uid and euid
  */
 static DEFINE_SPINLOCK(sp_spinlock);
@@ -245,20 +240,6 @@ static int sp_open(struct inode *inode, struct file *filp)
        
 	sppd = container_of(inode->i_cdev, struct scullpipe, cdev);
 	filp->private_data = sppd;
-	
-	/*
-	 * only one user ever
-	 *
-	if (!atomic_dec_and_test(&sp_available)) {
-		pr_info(SP": sp not available\n");
-		atomic_inc(&sp_available);
-		return -EBUSY;
-	}
-	*/
-
-	/*
-	 * only uid and euid
-	 */
 	const struct cred *cred = current_cred();
 
 	spin_lock(&sp_spinlock);
@@ -397,79 +378,10 @@ static ssize_t sp_read(struct file *filp, char __user *user_buf,
 	return count;
 }
 
-/*
- * jiffies
- */
-static unsigned long j, stamp_1, stamp_half, stamp_n, n = 250;
-static char setted = false;
-
-static void tasklet_pr_info(unsigned long d)
-{
-	pr_info("TASKLET HAPPEN!\n");
-	pr_info("%lu\n", d);
-}
-
 static ssize_t sp_write(struct file *filp, const char __user *user_buf,
 		size_t count, loff_t *offset)
 {
 
-	/* jiffies */
-	j = jiffies + 5*HZ;
-
-	struct tasklet_struct ts1 = {
-		.func = &tasklet_pr_info,
-		.data = 5*HZ
-	};
-
-	tasklet_init(&ts1, tasklet_pr_info, 5*HZ);
-	tasklet_schedule(&ts1);
-
-	/*
-	mdelay(5000000000);
-	mdelay(5000);
-	*/
-
-	/*
-	set_current_state(TASK_INTERRUPTIBLE);
-	schedule_timeout(5*HZ);
-	*/
-	/*
-	wait_queue_head_t w1;
-	init_waitqueue_head(&w1);
-	wait_event_timeout(w1, 0, 5*HZ);
-	*/
-	/*
-	if (!setted) {
-		stamp_1 = j + HZ;
-		stamp_half = j + HZ/2;
-		stamp_n = j + n * HZ / 1000;
-		setted = true;
-	}
-	*/
-	/*
-	pr_info(SP": j %lu, s %lu, hs %lu, n %lu\n", j, stamp_1, stamp_half, stamp_n);
-	pr_info(SP": HZ %i\n", HZ);
-	*/
-
-	/*
-	if (time_after(j, stamp_half)) {
-		pr_info(SP": HALF SEC  _________________________________________________________________________________\n");
-	}
-
-	if (time_after(j, stamp_1)) {
-		pr_info(SP": 1 sec --------------------------------------------------------------------------------------------------------------\n");
-		setted = 0;
-		return 1;
-	}
-	*/
-
-
-	/* also exists
-	 * time_after_eq (>=)
-	 * time_before_eq (<=)
-	 */
-
-	/* jiffies */
 	struct scullpipe *sppd;
 	int retval;
 	
