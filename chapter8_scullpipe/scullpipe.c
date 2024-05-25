@@ -378,6 +378,8 @@ static ssize_t sp_read(struct file *filp, char __user *user_buf,
 	return count;
 }
 
+static kmem_cache_t *scache;
+
 static ssize_t sp_write(struct file *filp, const char __user *user_buf,
 		size_t count, loff_t *offset)
 {
@@ -385,6 +387,10 @@ static ssize_t sp_write(struct file *filp, const char __user *user_buf,
 	struct scullpipe *sppd;
 	int retval;
 	
+	/*
+	void *p = kmalloc(123, __GFP_DMA);
+	*/
+
 	sppd = filp->private_data;
 
 	if (down_interruptible(&sppd->sem))
