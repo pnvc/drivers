@@ -16,6 +16,7 @@
 #include <linux/jiffies.h>
 #include <linux/delay.h>
 #include <linux/interrupt.h>
+#include <linux/slab.h>
 
 #include "scullpipe.h"
 
@@ -378,7 +379,13 @@ static ssize_t sp_read(struct file *filp, char __user *user_buf,
 	return count;
 }
 
-static kmem_cache_t *scache;
+/*
+static struct kmem_cache *scache;
+static void hi_str(char *s, const char *str)
+{
+	memcpy(s, str, 4);
+}
+*/
 
 static ssize_t sp_write(struct file *filp, const char __user *user_buf,
 		size_t count, loff_t *offset)
@@ -386,6 +393,30 @@ static ssize_t sp_write(struct file *filp, const char __user *user_buf,
 
 	struct scullpipe *sppd;
 	int retval;
+
+/*
+	char *c1, *c2, *c3;
+	scache = kmem_cache_create("scache", 100, 0, SLAB_HWCACHE_ALIGN, NULL);
+	c1 = kmem_cache_alloc(scache, GFP_KERNEL);
+	c2 = kmem_cache_alloc(scache, GFP_KERNEL);
+	c3 = kmem_cache_alloc(scache, GFP_KERNEL | __GFP_NORETRY);
+	hi_str(c1, "aaa\0");
+	hi_str(c2, "bbb\0");
+	hi_str(c3, "ccc\0");
+	pr_info("scullpipe c1 size: %lu\n", ksize(c1));
+	pr_info("scullpipe c2 size: %lu\n", ksize(c2));
+	pr_info("scullpipe c3 size: %lu\n", ksize(c3));
+	pr_info("scullpipe: %s\n", c1);
+	pr_info("scullpipe: %s\n", c2);
+	pr_info("scullpipe: %s\n", c3);
+
+	kmem_cache_free(scache, c1);
+	kmem_cache_free(scache, c2);
+	kmem_cache_free(scache, c3);
+	kmem_cache_destroy(scache);
+*/
+
+
 	
 	/*
 	void *p = kmalloc(123, __GFP_DMA);
