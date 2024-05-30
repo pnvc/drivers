@@ -394,6 +394,8 @@ static ssize_t sp_write(struct file *filp, const char __user *user_buf,
 	struct scullpipe *sppd;
 	int retval;
 
+	void *a = kmalloc(50000, GFP_KERNEL | __GFP_COLD);
+
 /*
 	char *c1, *c2, *c3;
 	scache = kmem_cache_create("scache", 100, 0, SLAB_HWCACHE_ALIGN, NULL);
