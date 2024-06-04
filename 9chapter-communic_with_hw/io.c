@@ -5,6 +5,9 @@
 #include <linux/fs.h>
 #include <linux/cdev.h>
 
+/* chapter 9 */
+#include <linux/ioport.h>
+
 #define IO "io"
 #define IOM "io: "
 #define RET_SUCCESS 0
@@ -19,7 +22,33 @@ struct io {
 	struct cdev cdev;
 	struct class *class;
 	struct file_operations fops;
+
+	/* chapter 9 */
+	struct resource *resource;
 };
+
+static int io_open(struct inode *, struct file *);
+static ssize_t io_write(struct file *, const char __user *,
+			size_t, loff_t *);
+
+static struct io io = {
+	.fops = {
+		.owner = THIS_MODULE,
+		.write = io_write,
+		.open = io_open,
+	}
+};
+
+static int io_request_region(void)
+{
+	io.resource = request_region(0x5000, 10, IO);
+	if (!io.resource) {
+		pr_info(IOM"failed io_request_region\n");
+		return RET_FAILURE;
+	}
+
+	return RET_SUCCESS;
+}
 
 static int io_open(struct inode *inode, struct file *filp)
 {
@@ -48,13 +77,6 @@ static ssize_t io_write(struct file *filp, const char __user *buf,
 	return 1;
 }
 
-static struct io io = {
-	.fops = {
-		.owner = THIS_MODULE,
-		.write = io_write,
-		.open = io_open,
-	}
-};
 
 static int io_device_create(void)
 {
@@ -120,7 +142,8 @@ static int io_init(void)
 		reg_dev()		||
 		io_create_class()	||
 		reg_cdev()		||
-		io_device_create()
+		io_device_create()	||
+		io_request_region()
 	   )
 		return RET_FAILURE;
 
@@ -134,6 +157,7 @@ static void io_exit(void)
 	device_destroy(io.class, io.dev);
 	class_destroy(io.class);
 	unregister_chrdev_region(io.dev, NR_DEVICES);
+	release_region(0x5000, 10);
 	pr_info(IOM"closed\n");
 }
 
