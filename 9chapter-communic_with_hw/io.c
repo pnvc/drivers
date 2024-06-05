@@ -8,12 +8,15 @@
 /* chapter 9 */
 #include <linux/ioport.h>
 #include <asm/io.h>
+#include <asm-generic/io.h>
 
 #define IO "io"
 #define IOM "io: "
 #define RET_SUCCESS 0
 #define RET_FAILURE -1
 #define NR_DEVICES 1
+#define IO_START 0x378
+#define IO_NR 0x8
 
 static int major = 0, minor = 0;
 
@@ -45,7 +48,7 @@ static struct io io = {
 
 static int io_request_region(void)
 {
-	io.resource = request_region(0x378, 0x3, IO);
+	io.resource = request_region(IO_START, IO_NR, IO);
 	if (!io.resource) {
 		pr_info(IOM"failed io_request_region\n");
 		return RET_FAILURE;
@@ -71,10 +74,13 @@ static ssize_t io_write(struct file *filp, const char __user *buf,
 
 	switch(iop->cmd) {
 	case '0':
-		unsigned short a;
+		unsigned short a = 0;
 		pr_info(IOM"cmd [ZERO]\n");
-		outw_p(0xdeed, 0x378);
-		a = inw_p(0x378);
+		for (char i = 0; i < IO_NR; i++)
+			outb_p(0x0, IO_START+i);
+		wmb();
+		a = inb_p(IO_START+0);
+		rmb();
 		pr_info(IOM"%x\n", a);
 		break;
 	default:
@@ -144,8 +150,6 @@ static int reg_dev(void)
 
 	if (retval)
 		pr_info(IOM"failed reg_dev, err = %d\n", retval);
-	else
-		pr_info(IOM"major %d, minor %d\n", major, minor);
 
 	return retval;
 }
@@ -154,15 +158,15 @@ static int reg_dev(void)
 static int io_init(void)
 {
 	if (
-		reg_dev()		||
-		io_create_class()	||
-		reg_cdev()		||
-		io_device_create()	||
-		io_request_region()
+		reg_dev()		|| /* get major */
+		io_create_class()	|| /* create class */
+		reg_cdev()		|| /* reg char device */
+		io_device_create()	|| /* create /dev/io */
+		io_request_region()	   /* get io port address range */
 	   )
 		return RET_FAILURE;
 
-	pr_info(IOM"started\n");
+	pr_info(IOM"started. MAJOR [%d], MINOR [%d]\n", major, minor);
 
 	return RET_SUCCESS;
 }
@@ -172,7 +176,7 @@ static void io_exit(void)
 	device_destroy(io.class, io.dev);
 	class_destroy(io.class);
 	unregister_chrdev_region(io.dev, NR_DEVICES);
-	release_region(0x378, 3);
+	release_region(IO_START, IO_NR);
 	pr_info(IOM"closed\n");
 }
 
