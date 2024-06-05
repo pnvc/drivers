@@ -7,6 +7,7 @@
 
 /* chapter 9 */
 #include <linux/ioport.h>
+#include <asm/io.h>
 
 #define IO "io"
 #define IOM "io: "
@@ -30,18 +31,21 @@ struct io {
 static int io_open(struct inode *, struct file *);
 static ssize_t io_write(struct file *, const char __user *,
 			size_t, loff_t *);
+static ssize_t io_read(struct file *, char __user *,
+			size_t, loff_t *);
 
 static struct io io = {
 	.fops = {
 		.owner = THIS_MODULE,
 		.write = io_write,
 		.open = io_open,
+		.read = io_read
 	}
 };
 
 static int io_request_region(void)
 {
-	io.resource = request_region(0x5000, 10, IO);
+	io.resource = request_region(0x378, 0x3, IO);
 	if (!io.resource) {
 		pr_info(IOM"failed io_request_region\n");
 		return RET_FAILURE;
@@ -67,14 +71,25 @@ static ssize_t io_write(struct file *filp, const char __user *buf,
 
 	switch(iop->cmd) {
 	case '0':
-		pr_info(IOM"ZERO\n");
+		unsigned short a;
+		pr_info(IOM"cmd [ZERO]\n");
+		outw_p(0xdeed, 0x378);
+		a = inw_p(0x378);
+		pr_info(IOM"%x\n", a);
 		break;
 	default:
-		pr_info(IOM"%c\n", iop->cmd);
+		pr_info(IOM"cmd [%c]\n", iop->cmd);
 		break;
 	}
 
 	return 1;
+}
+
+static ssize_t io_read(struct file *filp, char __user *buf,
+			size_t count, loff_t *f_pos)
+{
+	ssize_t retval = 0;
+	return retval;
 }
 
 
@@ -157,7 +172,7 @@ static void io_exit(void)
 	device_destroy(io.class, io.dev);
 	class_destroy(io.class);
 	unregister_chrdev_region(io.dev, NR_DEVICES);
-	release_region(0x5000, 10);
+	release_region(0x378, 3);
 	pr_info(IOM"closed\n");
 }
 
