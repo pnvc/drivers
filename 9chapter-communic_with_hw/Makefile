@@ -18,3 +18,6 @@ in:
 
 rm:
 	@rmmod $(KO_FILE)
+
+inm:
+	@insmod $(KO_FILE) use_mem=1
