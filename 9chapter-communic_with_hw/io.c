@@ -14,17 +14,25 @@
 #define RET_SUCCESS 0
 #define RET_FAILURE -1
 #define NR_DEVICES 1
-#define IO_START 0xa0000
-#define IO_NR 0x100000 - IO_START
+#define IO_START 0x3c0
+#define IO_NR 4
 #define X "%X\n"
 #define D "%d\n"
 #define C "%c\n"
 #define P "%p\n"
 #define S "%s\n"
+#define IO_1 0
+#define IO_2 1
+#define IO_3 2
+#define IO_4 3
+#define IO_5 4
+#define IO_6 5
+#define IO_7 6
+#define IO_8 7
+#define IO_9 8
+#define IO_10 9
 
 static int major = 0, minor = 0, use_mem = 0;
-
-/* chapter 9 */
 module_param(use_mem, int, S_IRUGO);
 
 struct io {
@@ -57,11 +65,14 @@ static struct io io = {
 /* chapter 9 */
 static int io_request_region(void)
 {
+	/*
 	io.resource = request_region(IO_START, IO_NR, IO);
 	if (!io.resource) {
 		pr_info(IOM"failed io_request_region\n");
 		return RET_FAILURE;
-	}
+	}*/
+
+	pr_info(IOM"successfull request_region\n");
 
 	return RET_SUCCESS;
 }
@@ -101,20 +112,25 @@ static ssize_t io_write(struct file *filp, const char __user *buf,
 	case '0':
 		/* chapter 9 */
 		if (use_mem) {
-			int x;
+			//int x;
 			char str[10];
 			void __iomem *add = io.iomem;
 			iowrite16(0x3235, add);
 			//memcpy_fromio(str, add, 2);
 			pr_info(IOM S, str);
 		} else {
-			unsigned short a = 0;
+			/* thats work first 2 regs of 0x3c0 on VBOX ! */
+			volatile char a = 0x31;
+			volatile char b = 0x33;
+			volatile char c = 0x72;
 			pr_info(IOM"cmd [ZERO]\n");
-			outb_p(0x66, IO_START+0);
-			wmb();
-			a = inb_p(IO_START+0);
-			rmb();
-			pr_info(IOM"%x\n", a);
+			outb(a, IO_START+IO_1);
+			outb(b, IO_START+IO_2);
+			outb(c, IO_START+IO_3);
+			a = inb(IO_START+IO_1);
+			b = inb(IO_START+IO_2);
+			c = inb(IO_START+IO_3);
+			pr_info(IOM"%x %x %x\n", a, b, c);
 		}
 		break;
 	case '9':
@@ -124,6 +140,7 @@ static ssize_t io_write(struct file *filp, const char __user *buf,
 			memcpy_fromio(str, add, 2);
 			pr_info(IOM S, str);
 		}
+		break;
 	default:
 		pr_info(IOM"cmd [%c]\n", iop->cmd);
 		break;
@@ -135,14 +152,17 @@ static ssize_t io_write(struct file *filp, const char __user *buf,
 static ssize_t io_read(struct file *filp, char __user *buf,
 			size_t count, loff_t *f_pos)
 {
-	ssize_t retval = 0;
 	char kbuf[10];
 	void __iomem *add = io.iomem;
+	int err;
 
 	memcpy_fromio(kbuf, add, 2);
 	pr_info(IOM S, kbuf);
 
-	copy_to_user(buf, kbuf, 2);
+	err = copy_to_user(buf, kbuf, 2);
+	if (err < 0) {
+		return -EFAULT;
+	}
 
 	return count;
 }
@@ -207,6 +227,8 @@ static int reg_dev(void)
 static int io_init(void)
 {
 	int err = 0;
+			/* io mem region */	          /* io region */
+	use_mem ? (err = io_request_mem_region()) : (err = io_request_region());
 	if (
 		reg_dev()		|| /* get major */
 		io_create_class()	|| /* create class */
@@ -215,8 +237,6 @@ static int io_init(void)
 	   )
 		return RET_FAILURE;
 
-			/* io mem region */	          /* io region */
-	use_mem ? (err = io_request_mem_region()) : (err = io_request_region());
 	if (err)
 		return RET_FAILURE;
 
