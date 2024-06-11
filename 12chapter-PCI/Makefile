@@ -7,7 +7,7 @@ else
 	KERNDIR = /lib/modules/$(shell uname -r)/build
 
 default:
-	$(MAKE) -C $(KERNDIR) M=$(PWD) modules
+	$(MAKE) -C $(KERNDIR) M=$(PWD) modules modules_install
 endif
 
 clean:

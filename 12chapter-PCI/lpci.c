@@ -5,6 +5,9 @@
 #include <linux/fs.h>
 #include <linux/cdev.h>
 
+/* chapter 12 PCI */
+#include <linux/pci.h>
+
 #define LPCI "lpci"
 #define LPCIM "lpci: "
 
@@ -125,6 +128,45 @@ static int reg_dev(void)
 	return retval;
 }
 
+/* chapter 12 PCI */
+struct lpci_pci {
+	int lp;
+	char pl;
+} __attribute__ ((packed));
+
+static struct lpci_pci lpci_pci = {
+	.lp = 12,
+	.pl = 21
+};
+
+static const struct pci_device_id lpci_pci_ids[] = {
+	{
+		//PCI_DEVICE_CLASS(0x999, 0x666), ; with this no in modules.alias
+		PCI_DEVICE(0x666, 0x999),
+		.driver_data = (unsigned long)&lpci_pci
+	},
+	{}
+};
+
+MODULE_DEVICE_TABLE(pci, lpci_pci_ids);
+
+static int lpci_pci_probe(struct pci_dev *dev, const struct pci_device_id *id)
+{
+	return 0;
+}
+
+static void lpci_pci_remove(struct pci_dev *dev)
+{
+	return;
+}
+
+static struct pci_driver lpci_pci_driver = {
+	.name = LPCI,
+	.id_table = lpci_pci_ids,
+	.probe = lpci_pci_probe,
+	.remove = lpci_pci_remove,
+};
+
 
 static int lpci_init(void)
 {
@@ -134,6 +176,10 @@ static int lpci_init(void)
 		reg_cdev()		|| /* reg char device */
 		lpci_device_create()	   /* create /dev/lpci */
 	   )
+		return RET_FAILURE;
+
+	/* chapter 12 PCI */
+	if (pci_register_driver(&lpci_pci_driver))
 		return RET_FAILURE;
 
 	pr_info(LPCIM"started. MAJOR [%d], MINOR [%d]\n", major, minor);
@@ -146,6 +192,9 @@ static void lpci_exit(void)
 	device_destroy(lpci.class, lpci.dev);
 	class_destroy(lpci.class);
 	unregister_chrdev_region(lpci.dev, NR_DEVICES);
+	/* chapter 12 PCI */
+	pci_unregister_driver(&lpci_pci_driver);
+
 	pr_info(LPCIM"closed\n");
 }
 
