@@ -8,10 +8,12 @@ else
 
 default:
 	$(MAKE) -C $(KERNDIR) M=$(PWD) modules modules_install
+	@depmod
 endif
 
 clean:
 	$(MAKE) -C $(KERNDIR) M=$(PWD) clean
+	@./rmrfupdates
 
 in:
 	@insmod $(KO_FILE)
