@@ -152,6 +152,20 @@ MODULE_DEVICE_TABLE(pci, lpci_pci_ids);
 
 static int lpci_pci_probe(struct pci_dev *dev, const struct pci_device_id *id)
 {
+	u16 rw, ww;
+	if (pci_enable_device(dev))
+		return -EFAULT;
+
+	/* no deal with byte ordering */
+	if (pci_read_config_word(dev, 0, &rw))
+		return -EFAULT;
+
+	if (pci_write_config_word(dev, 2, ww))
+		return -EFAULT;
+
+
+
+	pr_info(LPCIM"%d\n", ((const struct lpci_pci*)(id->driver_data))->lp);
 	return 0;
 }
 
