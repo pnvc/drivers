@@ -4,18 +4,34 @@
 #include <linux/cdev.h>
 #include <linux/delay.h>
 
+/* chapter 14 the LDM */
+#include <linux/kobject.h>
+#include <linux/sysfs.h>
+
 #define TLDM  "tldm"
 #define TLDMM "tldm: "
 
 static int major = 0;
 static int minor = 0;
 
+
+
 struct tldm {
+	/* chapter 14 TheLDM */
+	struct kobject kobj;
+	int kobj_count;
+
 	char cmd;
 	dev_t dev;
 	struct cdev cdev;
 	struct class *class;
 	struct file_operations fops;
+};
+
+/* chapter 14 */
+struct tldm2 {
+	struct kobject kobj;
+	char cmd;
 };
 
 static int tldm_open(struct inode *, struct file *);
@@ -31,6 +47,10 @@ static struct tldm tldm = {
 		.read = tldm_read,
 		.write = tldm_write
 	}
+};
+
+static struct tldm2 tldm2 = {
+	.cmd = 0
 };
 
 static int tldm_open(struct inode *inode, struct file *filp)
@@ -62,27 +82,99 @@ static ssize_t tldm_write(struct file *filp, const char __user *user_buf,
 }
 
 /* chapter 14 The Linux Device Model */
+#define to_tldm(map) container_of(map, struct tldm, kobj);
+#define to_tldm2(map) container_of(map, struct tldm2, kobj);
 #define TLDMKO "tldm_kobj"
 static void tldm_kobj_type_release(struct kobject *);
-static struct kobject tldm_kobj;
-static struct kobj_type tldm_kobj_type = {
-	.release = tldm_kobj_type_release
+static void tldm_kobj_type_release2(struct kobject *);
+
+/* sysfs attrs and show/store */
+static struct attribute tldm_kobj_attr = {
+	.name = "pesos",
+	.mode = 0644
 };
+static struct attribute *tldm_kobj_attrs[] = {
+	&tldm_kobj_attr,
+	NULL
+};
+static struct attribute_group tldm_kobj_attr_group = {
+	.attrs = tldm_kobj_attrs
+};
+static const struct attribute_group *tldm_kobj_attr_groups[] = {
+	&tldm_kobj_attr_group,
+	NULL
+};
+static ssize_t tldm_kobj_sysfs_show(struct kobject *kobj, struct attribute *attr,
+		    char *buffer);
+static ssize_t tldm_kobj_sysfs_store(struct kobject *kobj, struct attribute *attr,
+		    const char *buffer, size_t size);
+static struct sysfs_ops tldm_kobj_sysfs_ops = {
+	.show = tldm_kobj_sysfs_show,
+	.store = tldm_kobj_sysfs_store
+};
+static ssize_t tldm_kobj_sysfs_show(struct kobject *kobj, struct attribute *attr,
+				    char *buffer)
+{
+	struct tldm *tldm_tmp = to_tldm(kobj);
+	return sysfs_emit(buffer, "%d\n", tldm_tmp->cmd);
+}
+static ssize_t tldm_kobj_sysfs_store(struct kobject *kobj, struct attribute *attr,
+				     const char *buffer, size_t size)
+{
+	struct tldm *tldm_tmp = to_tldm(kobj);
+	int ret;
+	int i;
+
+	ret = kstrtoint(buffer, 10, &i);
+	if (ret < 0)
+		return ret;
+	tldm_tmp->cmd = (char)i;
+
+	return size;
+}
+
+static struct kobj_type tldm_kobj_type = {
+	.release = tldm_kobj_type_release,
+	.sysfs_ops = &tldm_kobj_sysfs_ops,
+	.default_groups = tldm_kobj_attr_groups
+
+};
+
+static struct kset *tldm_kset;
+
 static int tldm_kobj_init(void)
 {
-	memset(&tldm_kobj, 0, sizeof(struct kobject));
+	memset(&tldm.kobj, 0, sizeof(struct kobject));
+/*
+	kobject_init(&tldm.kobj, &tldm_kobj_type);
 
-	kobject_init(&tldm_kobj, &tldm_kobj_type);
+	if (kobject_add(&tldm.kobj, NULL, TLDMKO) < 0) {
+		kobject_put(&tldm.kobj);
+		return -1;
+	}
 
-	kobject_add(&tldm_kobj, NULL, TLDMKO);
+	kobject_uevent(&tldm.kobj, KOBJ_ADD);
+
+	tldm.kobj_count = 1;
+*/
+
+	tldm_kset = kset_create_and_add("tldm_kset", NULL, NULL);
+	if (!tldm_kset)
+		return -ENOMEM;
 
 	return 0;
 }
 
+
 static void tldm_kobj_type_release(struct kobject *kobj)
 {
+	struct tldm *ttldm = to_tldm(kobj);
 	pr_info(TLDMM"kobj released\n");
-	return;
+}
+static void tldm_kobj_type_release2(struct kobject *kobj)
+{
+	struct tldm2 *ttldm2 = to_tldm2(kobj);
+	pr_info(TLDMM"kobj 2 released\n");
 }
 
 static int __init tldm_init(void)
@@ -148,7 +240,10 @@ static void __exit tldm_exit(void)
 	class_destroy(tldm.class);
 	cdev_del(&tldm.cdev);
 	unregister_chrdev_region(tldm.dev, 1);
-	kobject_put(&tldm_kobj);
+
+	/* chapter 14 */
+	kset_unregister(tldm_kset);
+
 	pr_info(TLDMM"exited\n");
 }
 
