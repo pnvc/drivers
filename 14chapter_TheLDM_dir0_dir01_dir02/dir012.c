@@ -260,15 +260,35 @@ static struct kobj_type dir1_ktype = {
 static struct dir1 *dir1;
 					/* DIR1 */
 
-/* DIR2 */
-/* DIR2 */
+					/* DIR2 */
+					/* DIR2 */
+
+					/* KSET */
+static int dir012_uevent_filter(const struct kobject *kobj)
+{
+	const struct kobj_type *kt = get_ktype(kobj);
+	pr_info(MES"%s\n", kt->default_groups[0]->name);
+	return 1;
+}
+static struct kset_uevent_ops dir012_kset_uevent_ops = {
+	.filter = dir012_uevent_filter
+};
+static struct kset *dir012_kset;
+					/* KSET */
 
 static int __init dir012_init(void)
 {
+					/* KSET */
+	dir012_kset = kset_create_and_add("dir012_kset", (const struct kset_uevent_ops *)&dir012_kset_uevent_ops, kernel_kobj);
+	if (!dir012_kset)
+		return -ENOMEM;
+					/* KSET */
 					/* DIR0 */
 	dir0 = kzalloc(sizeof(*dir0), GFP_KERNEL);
 	if (!dir0)
 		return -ENOMEM;
+
+	dir0->kobj.kset = dir012_kset;
 
 	if (kobject_init_and_add(&dir0->kobj, &dir0_ktype, NULL, DIR0)) {
 		kobject_put(&dir0->kobj);
@@ -302,6 +322,7 @@ static void __exit dir012_exit(void)
 {
 	kobject_put(&dir1->kobj);
 	kobject_put(&dir0->kobj);
+	kset_unregister(dir012_kset);
 
 	pr_info(MES"exited\n");
 }
