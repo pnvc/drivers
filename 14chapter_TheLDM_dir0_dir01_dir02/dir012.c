@@ -2,6 +2,7 @@
 #include <linux/init.h>
 #include <linux/kobject.h>
 #include <linux/sysfs.h>
+#include <linux/export.h>
 
 #define DIR012	"dir012"
 #define MES	"dir012: "
@@ -273,13 +274,18 @@ static int dir012_uevent_filter(const struct kobject *kobj)
 static struct kset_uevent_ops dir012_kset_uevent_ops = {
 	.filter = dir012_uevent_filter
 };
-static struct kset *dir012_kset;
+struct kset *dir012_kset;
+static struct kset *get_dir012_kset(void)
+{
+	return dir012_kset;
+}
+EXPORT_SYMBOL_GPL(dir012_kset);
 					/* KSET */
 
 static int __init dir012_init(void)
 {
 					/* KSET */
-	dir012_kset = kset_create_and_add("dir012_kset", (const struct kset_uevent_ops *)&dir012_kset_uevent_ops, kernel_kobj);
+	dir012_kset = kset_create_and_add("dir012_kset", (const struct kset_uevent_ops *)&dir012_kset_uevent_ops, NULL);
 	if (!dir012_kset)
 		return -ENOMEM;
 					/* KSET */
