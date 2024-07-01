@@ -268,17 +268,13 @@ static struct dir1 *dir1;
 static int dir012_uevent_filter(const struct kobject *kobj)
 {
 	const struct kobj_type *kt = get_ktype(kobj);
-	pr_info(MES"%s\n", kt->default_groups[0]->name);
+	pr_info(MES"HAHA, UEVENT!\n");
 	return 1;
 }
 static struct kset_uevent_ops dir012_kset_uevent_ops = {
 	.filter = dir012_uevent_filter
 };
 struct kset *dir012_kset;
-static struct kset *get_dir012_kset(void)
-{
-	return dir012_kset;
-}
 EXPORT_SYMBOL_GPL(dir012_kset);
 					/* KSET */
 

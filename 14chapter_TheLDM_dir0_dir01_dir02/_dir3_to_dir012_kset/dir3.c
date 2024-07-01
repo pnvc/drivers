@@ -136,6 +136,8 @@ static int __init dir3_init(void)
 		kobject_put(&dir3->kobj);
 		return -EFAULT;
 	}
+
+	kobject_uevent(&dir3->kobj, KOBJ_ADD);
 					/* DIR3 */
 
 	pr_info(MES"inited\n");
