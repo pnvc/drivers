@@ -1,8 +1,8 @@
-MODULE_NAME = dir3
-KO_FILE = dir3.ko
+MODULE_NAME = lddbus
+KO_FILE = lddbus.ko
 
 ifneq ($(KERNELRELEASE),)
-	obj-m := dir3.o ../dir012.o
+	obj-m := lddbus.o
 else
 	PWD = $(shell pwd)
 	KERNDIR = /lib/modules/$(shell uname -r)/build
@@ -14,9 +14,10 @@ endif
 
 clean:
 	$(MAKE) -C $(KERNDIR) M=$(PWD) clean
+	@./rmrfupdates
 
 inm:
-	@modprobe $(MODULE_NAME) || @insmod $(KO_FILE)
+	@modprobe $(MODULE_NAME)
 
 rmm:
 	@rmmod $(MODULE_NAME)

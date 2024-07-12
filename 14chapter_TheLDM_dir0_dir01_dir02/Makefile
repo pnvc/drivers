@@ -17,7 +17,7 @@ clean:
 	@./rmrfupdates
 
 inm:
-	@modprobe $(MODULE_NAME)
+	@modprobe $(MODULE_NAME) || insmod $(KO_FILE)
 
 rmm:
 	@rmmod $(MODULE_NAME)
