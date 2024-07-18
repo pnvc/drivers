@@ -1,0 +1,2 @@
+#!/bin/bash
+dmesg|grep kek_drv:|tail -15

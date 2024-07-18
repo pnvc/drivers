@@ -13,7 +13,10 @@
 // BUS
 static int ldd_match(struct device *dev, struct device_driver *drv)
 {
-	return !strncmp(dev_name(dev), drv->name, strlen(drv->name));
+	if ((!strncmp(dev_name(dev), "kek", 3) && !strncmp(drv->name, "kek_drv", 7)) ||
+		(!strncmp(dev_name(dev), "lol", 3) && !strncmp(drv->name, "lol_drv", 7)))
+		return 1;
+	return 0;
 }
 
 static int ldd_uevent(const struct device *dev, struct kobj_uevent_env *env)
@@ -47,7 +50,6 @@ static struct device ldd_bus = {
 };
 
 // DEVICES
-
 static void ldd_dev_release(struct device *dev)
 {
 	pr_info(LDDBUSM SNL, "ldd device released");
@@ -62,6 +64,29 @@ int register_ldd_dev(struct ldd_dev *ldddev)
 	return device_register(&ldddev->dev);
 }
 EXPORT_SYMBOL(register_ldd_dev);
+
+static ssize_t show_version(struct device_driver *drv, char *buf)
+{
+	struct ldd_drv *ldrv = to_ldd_drv(drv);
+	return snprintf(buf, PAGE_SIZE, "%s\n", ldrv->ver);
+}
+
+int register_ldd_drv(struct ldd_drv *drv)
+{
+	int ret;
+
+	drv->drv.bus = &ldd_bus_type;
+	ret = driver_register(&drv->drv);
+	if (ret)
+		return ret;
+
+	drv->ver_attr.attr.name = "version";
+	drv->ver_attr.attr.mode = S_IRUGO;
+	drv->ver_attr.show = show_version;
+	drv->ver_attr.store = NULL;
+	return driver_create_file(&drv->drv, &drv->ver_attr);
+}
+EXPORT_SYMBOL(register_ldd_drv);
 
 static int __init lddbus_init(void)
 {

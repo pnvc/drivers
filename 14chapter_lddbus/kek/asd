@@ -1,0 +1,79 @@
+In file included from /root/kernel-ark-os-build/include/linux/container_of.h:5,
+                 from /root/kernel-ark-os-build/include/linux/list.h:5,
+                 from /root/kernel-ark-os-build/include/linux/module.h:12,
+                 from /root/drivers/14chapter_lddbus/kek/kek.c:1:
+/root/drivers/14chapter_lddbus/kek/kek.c: In function ‘kek_show_ver’:
+/root/kernel-ark-os-build/include/linux/container_of.h:20:54: error: ‘struct kek_dev’ has no member named ‘ld’
+   20 |         static_assert(__same_type(*(ptr), ((type *)0)->member) ||       \
+      |                                                      ^~
+/root/kernel-ark-os-build/include/linux/build_bug.h:78:56: note: in definition of macro ‘__static_assert’
+   78 | #define __static_assert(expr, msg, ...) _Static_assert(expr, msg)
+      |                                                        ^~~~
+/root/kernel-ark-os-build/include/linux/container_of.h:20:9: note: in expansion of macro ‘static_assert’
+   20 |         static_assert(__same_type(*(ptr), ((type *)0)->member) ||       \
+      |         ^~~~~~~~~~~~~
+/root/kernel-ark-os-build/include/linux/container_of.h:20:23: note: in expansion of macro ‘__same_type’
+   20 |         static_assert(__same_type(*(ptr), ((type *)0)->member) ||       \
+      |                       ^~~~~~~~~~~
+/root/drivers/14chapter_lddbus/kek/kek.c:18:25: note: in expansion of macro ‘container_of’
+   18 | #define to_kek_dev(dev) container_of(dev, struct kek_dev, dev)
+      |                         ^~~~~~~~~~~~
+/root/drivers/14chapter_lddbus/kek/kek.c:23:30: note: in expansion of macro ‘to_kek_dev’
+   23 |         struct kek_dev *kd = to_kek_dev(ld);
+      |                              ^~~~~~~~~~
+/root/kernel-ark-os-build/include/linux/compiler_types.h:376:27: error: expression in static assertion is not an integer
+  376 | #define __same_type(a, b) __builtin_types_compatible_p(typeof(a), typeof(b))
+      |                           ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/root/kernel-ark-os-build/include/linux/build_bug.h:78:56: note: in definition of macro ‘__static_assert’
+   78 | #define __static_assert(expr, msg, ...) _Static_assert(expr, msg)
+      |                                                        ^~~~
+/root/kernel-ark-os-build/include/linux/container_of.h:20:9: note: in expansion of macro ‘static_assert’
+   20 |         static_assert(__same_type(*(ptr), ((type *)0)->member) ||       \
+      |         ^~~~~~~~~~~~~
+/root/kernel-ark-os-build/include/linux/container_of.h:20:23: note: in expansion of macro ‘__same_type’
+   20 |         static_assert(__same_type(*(ptr), ((type *)0)->member) ||       \
+      |                       ^~~~~~~~~~~
+/root/drivers/14chapter_lddbus/kek/kek.c:18:25: note: in expansion of macro ‘container_of’
+   18 | #define to_kek_dev(dev) container_of(dev, struct kek_dev, dev)
+      |                         ^~~~~~~~~~~~
+/root/drivers/14chapter_lddbus/kek/kek.c:23:30: note: in expansion of macro ‘to_kek_dev’
+   23 |         struct kek_dev *kd = to_kek_dev(ld);
+      |                              ^~~~~~~~~~
+In file included from /root/kernel-ark-os-build/include/uapi/linux/posix_types.h:5,
+                 from /root/kernel-ark-os-build/include/uapi/linux/types.h:14,
+                 from /root/kernel-ark-os-build/include/linux/types.h:6,
+                 from /root/kernel-ark-os-build/include/linux/kasan-checks.h:5,
+                 from /root/kernel-ark-os-build/include/asm-generic/rwonce.h:26,
+                 from ./arch/x86/include/generated/asm/rwonce.h:1,
+                 from /root/kernel-ark-os-build/include/linux/compiler.h:251,
+                 from /root/kernel-ark-os-build/include/linux/build_bug.h:5:
+/root/kernel-ark-os-build/include/linux/stddef.h:16:33: error: ‘struct kek_dev’ has no member named ‘ld’
+   16 | #define offsetof(TYPE, MEMBER)  __builtin_offsetof(TYPE, MEMBER)
+      |                                 ^~~~~~~~~~~~~~~~~~
+/root/kernel-ark-os-build/include/linux/container_of.h:23:28: note: in expansion of macro ‘offsetof’
+   23 |         ((type *)(__mptr - offsetof(type, member))); })
+      |                            ^~~~~~~~
+/root/drivers/14chapter_lddbus/kek/kek.c:18:25: note: in expansion of macro ‘container_of’
+   18 | #define to_kek_dev(dev) container_of(dev, struct kek_dev, dev)
+      |                         ^~~~~~~~~~~~
+/root/drivers/14chapter_lddbus/kek/kek.c:23:30: note: in expansion of macro ‘to_kek_dev’
+   23 |         struct kek_dev *kd = to_kek_dev(ld);
+      |                              ^~~~~~~~~~
+/root/drivers/14chapter_lddbus/kek/kek.c:25:1: error: no return statement in function returning non-void [-Werror=return-type]
+   25 | }
+      | ^
+/root/drivers/14chapter_lddbus/kek/kek.c: In function ‘register_kek_dev’:
+/root/drivers/14chapter_lddbus/kek/kek.c:36:36: error: incompatible type for argument 1 of ‘register_ldd_dev’
+   36 |         err = register_ldd_dev(keke->dev);
+      |                                ~~~~^~~~~
+      |                                    |
+      |                                    struct ldd_dev
+In file included from /root/drivers/14chapter_lddbus/kek/kek.c:5:
+/root/drivers/14chapter_lddbus/kek/../lddbus.h:11:29: note: expected ‘struct ldd_dev *’ but argument is of type ‘struct ldd_dev’
+   11 | extern int register_ldd_dev(struct ldd_dev *);
+      |                             ^~~~~~~~~~~~~~~~
+cc1: some warnings being treated as errors
+make[3]: *** [/root/kernel-ark-os-build/scripts/Makefile.build:243: /root/drivers/14chapter_lddbus/kek/kek.o] Error 1
+make[2]: *** [/root/kernel-ark-os-build/Makefile:1929: /root/drivers/14chapter_lddbus/kek] Error 2
+make[1]: *** [/root/kernel-ark-os-build/Makefile:246: __sub-make] Error 2
+make: *** [Makefile:12: default] Error 2

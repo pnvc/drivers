@@ -1,0 +1,2 @@
+#!/bin/bash
+dmesg|grep lol_drv:|tail -15
