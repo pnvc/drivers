@@ -1,2 +1,2 @@
 #!/bin/bash
-dmesg|grep tldm:|tail -15
+dmesg|grep 2tldm:|tail -15

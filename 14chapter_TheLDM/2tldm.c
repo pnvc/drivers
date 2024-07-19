@@ -23,76 +23,92 @@ struct bar {
 
 struct foo_attribute {
 	struct attribute attr;
-	ssize_t (*show)(struct foo *foo, struct foo_attrgibute *foo_attr,
+	ssize_t (*show)(struct foo *foo, struct foo_attribute *foo_attr,
 			char *buf);
 	ssize_t (*store)(struct foo *foo, struct foo_attribute *foo_attr,
-			 const char *buf, size_t count)
+			 char *buf, size_t count);
 };
 #define to_foo_attribute(map) container_of(map, struct foo_attribute, attr)
 
 struct bar_attribute {
 	struct attribute attr;
-	ssize_t (*show)(struct bar *bar, struct bar_attrgibute *bar_attr,
+	ssize_t (*show)(struct bar *bar, struct bar_attribute *bar_attr,
 			char *buf);
 	ssize_t (*store)(struct bar *bar, struct bar_attribute *bar_attr,
-			 const char *buf, size_t count)
+			 char *buf, size_t count);
 };
-#define to_bar_attribute(map) conatiner_of(map, struct bar_attribute, attr)
+#define to_bar_attribute(map) container_of(map, struct bar_attribute, attr)
 
 static ssize_t foo_show(struct foo *foo, struct foo_attribute *foo_attr,
-			char *buf);
+			char *buf) { return 0; }
 static ssize_t foo_store(struct foo *foo, struct foo_attribute *foo_attr,
-			 const char *buf, size_t count);
+			 char *buf, size_t count) { return 0; }
+// example
 static ssize_t bar_show(struct bar *bar, struct bar_attribute *bar_attr,
-			char *buf);
+			char *buf)
+{
+	// we here from _bar_show
+	return sysfs_emit(buf, "%s\n", "from _bar_show to bar_show");
+}
 static ssize_t bar_store(struct bar *bar, struct bar_attribute *bar_attr,
-			 const char *buf, size_t count);
+			 char *buf, size_t count) { return 0; }
 static ssize_t _foo_show(struct kobject *kobj, struct attribute *attr,
-			 char *buf);
+			 char *buf) { return 0; }
 static ssize_t _foo_store(struct kobject *kobj, struct attribute *attr,
-			  char *buf, size_t count);
+			 const char *buf, size_t count) { return 0; }
+// example
 static ssize_t _bar_show(struct kobject *kobj, struct attribute *attr,
-			 char *buf);
+			 char *buf)
+{
+	// here we call bar_show from bar_attribute
+	struct bar *b;
+	struct bar_attribute *ba;
+	b = to_bar(kobj);
+	ba = to_bar_attribute(attr);
+	return ba->show(b, ba, buf);
+}
 static ssize_t _bar_store(struct kobject *kobj, struct attribute *attr,
-			  char *buf, size_t count);
+			  const char *buf, size_t count) { return 0; }
 static void foo_release(struct kobject *kobj);
 static void bar_release(struct kobject *kobj);
 
 static struct foo_attribute foo_attribute =
-	__ATTR("foo", 0664, foo_show, foo_store);
+	__ATTR(foo, 0664, foo_show, foo_store);
 
 static struct bar_attribute bar_attribute =
-	__ATTR("bar", 0664, bar_show, bar_store);
+	__ATTR(bar, 0664, bar_show, bar_store);
 
 static struct attribute *foo_def_attrs[] = {
 	&foo_attribute.attr,
 	NULL
 };
-ATTRIBUTE_GROUP(foo_def);
+ATTRIBUTE_GROUPS(foo_def);
 
 static struct attribute *bar_def_attrs[] = {
 	&bar_attribute.attr,
 	NULL
 };
-ATTRIBUTE_GROUP(bar_def);
+ATTRIBUTE_GROUPS(bar_def);
 
-static struct sysfs_ops foo_sysfs_ops = {
+static const struct sysfs_ops foo_sysfs_ops = {
 	.show = _foo_show,
 	.store = _foo_store
 };
 
-static struct sysfs_ops bar_sysfs_ops = {
+static const struct sysfs_ops bar_sysfs_ops = {
 	.show = _bar_show,
 	.store = _bar_store
 };
 
 static const struct kobj_type foo_ktype = {
 	.release = foo_release,
+	.sysfs_ops = &foo_sysfs_ops,
 	.default_groups = foo_def_groups
 };
 
 static const struct kobj_type bar_ktype = {
 	.release = bar_release,
+	.sysfs_ops = &bar_sysfs_ops,
 	.default_groups = bar_def_groups
 };
 
@@ -110,10 +126,11 @@ static void bar_release(struct kobject *kobj)
 	kfree(bar);
 }
 
+static struct foo *foo;
+static struct bar *bar;
+
 static int __init tldm_init(void)
 {
-	struct foo *foo;
-	struct bar *bar;
 	int err_count = 0;
 
 	foo_kset = kset_create_and_add("foo_kset", NULL, NULL);
@@ -156,6 +173,8 @@ static void __exit tldm_exit(void)
 {
 	kobject_put(&foo->kobj);
 	kobject_put(&bar->kobj);
+
+	kset_unregister(foo_kset);
 
 	pr_info(TLDMM"exited\n");
 }

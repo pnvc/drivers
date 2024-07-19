@@ -1,8 +1,8 @@
-MODULE_NAME = tldm
-KO_FILE = tldm.ko
+MODULE_NAME = 2tldm
+KO_FILE = 2tldm.ko
 
 ifneq ($(KERNELRELEASE),)
-	obj-m := tldm.o
+	obj-m := 2tldm.o
 else
 	PWD = $(shell pwd)
 	KERNDIR = /lib/modules/$(shell uname -r)/build
