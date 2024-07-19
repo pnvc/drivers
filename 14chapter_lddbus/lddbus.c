@@ -71,6 +71,7 @@ static ssize_t show_version(struct device_driver *drv, char *buf)
 	return snprintf(buf, PAGE_SIZE, "%s\n", ldrv->ver);
 }
 
+// DRIVERS
 int register_ldd_drv(struct ldd_drv *drv)
 {
 	int ret;
@@ -88,20 +89,60 @@ int register_ldd_drv(struct ldd_drv *drv)
 }
 EXPORT_SYMBOL(register_ldd_drv);
 
+// CLASS
+static const char *class_ver = "0.0.0.97";
+
+static void ldd_class_release(const struct class *class)
+{
+	pr_info(LDDBUSM SNL, "ldd class released");
+}
+
+static ssize_t ver_show(const struct class *class, const struct class_attribute *attr, char *buf)
+{
+	return snprintf(buf, PAGE_SIZE, "%s\n", class_ver);
+}
+static CLASS_ATTR_RO(ver); // struct class_attribute class_attr_ver
+static struct attribute *ldd_attrs[] = {
+	&class_attr_ver.attr,
+	NULL
+};
+ATTRIBUTE_GROUPS(ldd); // struct attribute_group *ldd_groups[]
+
+struct class ldd_class = {
+	.name = "ldd_class",
+	.class_release = ldd_class_release,
+	.class_groups = ldd_groups,
+};
+
 static int __init lddbus_init(void)
 {
 	int ret;
+	int ret_bus_create_file;
 
 	ret = bus_register(&ldd_bus_type);
 	if (ret)
 		return ret;
 
-	if (bus_create_file(&ldd_bus_type, &bus_attr_version))
+	ret_bus_create_file = bus_create_file(&ldd_bus_type, &bus_attr_version);
+	if (ret_bus_create_file)
 		pr_info(LDDBUSM SNL, "Unable create bus file version");
 
 	ret = device_register(&ldd_bus);
-	if (ret)
+	if (ret) {
+		if (!ret_bus_create_file)
+			bus_remove_file(&ldd_bus_type, &bus_attr_version);
+		bus_unregister(&ldd_bus_type);
 		return ret;
+	}
+
+	ret = class_register(&ldd_class);
+	if (ret) {
+		device_unregister(&ldd_bus);
+		if (!ret_bus_create_file)
+			bus_remove_file(&ldd_bus_type, &bus_attr_version);
+		bus_unregister(&ldd_bus_type);
+		return ret;
+	}
 
 	pr_info(LDDBUSM SNL, "started");
 	return 0;
@@ -112,6 +153,8 @@ static void __exit lddbus_exit(void)
 	device_unregister(&ldd_bus);
 	bus_remove_file(&ldd_bus_type, &bus_attr_version); // rem bus file
 	bus_unregister(&ldd_bus_type); // rem bus
+
+	class_unregister(&ldd_class);
 
 	pr_info(LDDBUSM SNL, "exited");
 }
