@@ -14,8 +14,10 @@
 static int ldd_match(struct device *dev, struct device_driver *drv)
 {
 	if ((!strncmp(dev_name(dev), "kek", 3) && !strncmp(drv->name, "kek_drv", 7)) ||
-		(!strncmp(dev_name(dev), "lol", 3) && !strncmp(drv->name, "lol_drv", 7)))
+		(!strncmp(dev_name(dev), "lol", 3) && !strncmp(drv->name, "lol_drv", 7))) {
+		pr_info(LDDBUSM "device: %s with driver: %s are added", dev_name(dev), drv->name);
 		return 1;
+	}
 	return 0;
 }
 
@@ -52,15 +54,19 @@ static struct device ldd_bus = {
 // DEVICES
 static void ldd_dev_release(struct device *dev)
 {
-	pr_info(LDDBUSM SNL, "ldd device released");
+	pr_info(LDDBUSM "%s " SNL, dev_name(dev), "device released");
 }
+
+struct class ldd_class;
 
 int register_ldd_dev(struct ldd_dev *ldddev)
 {
 	ldddev->dev.bus = &ldd_bus_type;
 	ldddev->dev.parent = &ldd_bus;
 	ldddev->dev.release = ldd_dev_release;
+	//ldddev->dev.class = &ldd_class;
 	ldddev->dev.init_name = ldddev->name;
+	pr_info(LDDBUSM"%s "SNL, ldddev->dev.init_name, "added");
 	return device_register(&ldddev->dev);
 }
 EXPORT_SYMBOL(register_ldd_dev);
