@@ -19,5 +19,6 @@ struct ldd_drv {
 
 extern int register_ldd_dev(struct ldd_dev *);
 extern int register_ldd_drv(struct ldd_drv *);
+extern int ldd_class_device_register(struct device *);
 
 #endif

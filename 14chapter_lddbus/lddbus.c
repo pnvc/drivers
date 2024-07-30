@@ -51,6 +51,55 @@ static struct device ldd_bus = {
 	.init_name = "ldd",
 };
 
+// CLASS
+static const char *class_ver = "0.0.0.97";
+
+static void ldd_class_release(const struct class *class)
+{
+	pr_info(LDDBUSM SNL, "ldd class released");
+}
+
+static ssize_t ver_show(const struct class *class, const struct class_attribute *attr, char *buf)
+{
+	return snprintf(buf, PAGE_SIZE, "%s\n", class_ver);
+}
+static CLASS_ATTR_RO(ver); // struct class_attribute class_attr_ver
+static struct attribute *ldd_attrs[] = {
+	&class_attr_ver.attr,
+	NULL
+};
+ATTRIBUTE_GROUPS(ldd); // struct attribute_group *ldd_groups[]
+
+struct class ldd_class = {
+	.name = "ldd_class",
+	.class_release = ldd_class_release,
+	.class_groups = ldd_groups,
+};
+
+int ldd_class_device_register(struct device *dev)
+{
+	dev->class = &ldd_class;
+	dev->parent = &ldd_bus;
+	return device_register(dev);
+}
+EXPORT_SYMBOL(ldd_class_device_register);
+
+// CLASS INTERFACE
+static int ldd_class_iface_add(struct device *dev)
+{
+	pr_info(LDDBUSM "%s " SNL, dev_name(dev), "added");
+	return 0;
+}
+static void ldd_class_iface_remove(struct device *dev)
+{
+	pr_info(LDDBUSM "%s " SNL, dev_name(dev), "removed");
+}
+static struct class_interface ldd_class_iface = {
+	.class = &ldd_class,
+	.add_dev = ldd_class_iface_add,
+	.remove_dev = ldd_class_iface_remove
+};
+
 // DEVICES
 static void ldd_dev_release(struct device *dev)
 {
@@ -95,35 +144,21 @@ int register_ldd_drv(struct ldd_drv *drv)
 }
 EXPORT_SYMBOL(register_ldd_drv);
 
-// CLASS
-static const char *class_ver = "0.0.0.97";
-
-static void ldd_class_release(const struct class *class)
-{
-	pr_info(LDDBUSM SNL, "ldd class released");
-}
-
-static ssize_t ver_show(const struct class *class, const struct class_attribute *attr, char *buf)
-{
-	return snprintf(buf, PAGE_SIZE, "%s\n", class_ver);
-}
-static CLASS_ATTR_RO(ver); // struct class_attribute class_attr_ver
-static struct attribute *ldd_attrs[] = {
-	&class_attr_ver.attr,
-	NULL
-};
-ATTRIBUTE_GROUPS(ldd); // struct attribute_group *ldd_groups[]
-
-struct class ldd_class = {
-	.name = "ldd_class",
-	.class_release = ldd_class_release,
-	.class_groups = ldd_groups,
-};
 
 static int __init lddbus_init(void)
 {
 	int ret;
 	int ret_bus_create_file;
+
+	ret = class_register(&ldd_class);
+	if (ret)
+		return ret;
+
+	ret = class_interface_register(&ldd_class_iface);
+	if (ret) {
+		class_unregister(&ldd_class);
+		return ret;
+	}
 
 	ret = bus_register(&ldd_bus_type);
 	if (ret)
@@ -141,15 +176,6 @@ static int __init lddbus_init(void)
 		return ret;
 	}
 
-	ret = class_register(&ldd_class);
-	if (ret) {
-		device_unregister(&ldd_bus);
-		if (!ret_bus_create_file)
-			bus_remove_file(&ldd_bus_type, &bus_attr_version);
-		bus_unregister(&ldd_bus_type);
-		return ret;
-	}
-
 	pr_info(LDDBUSM SNL, "started");
 	return 0;
 }
@@ -160,6 +186,7 @@ static void __exit lddbus_exit(void)
 	bus_remove_file(&ldd_bus_type, &bus_attr_version); // rem bus file
 	bus_unregister(&ldd_bus_type); // rem bus
 
+	class_interface_unregister(&ldd_class_iface);
 	class_unregister(&ldd_class);
 
 	pr_info(LDDBUSM SNL, "exited");
