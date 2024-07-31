@@ -23,9 +23,15 @@ static int ldd_match(struct device *dev, struct device_driver *drv)
 
 static int ldd_uevent(const struct device *dev, struct kobj_uevent_env *env)
 {
+	if (!strncmp(dev_name(dev), "kek", 3)) {
+		pr_info(LDDBUSM SNL, "kek dev in UEVENT!");
+		if (add_uevent_var(env, "KEK=kek"))
+			return -ENOMEM;
+	}
 	if (add_uevent_var(env, "LDDBUS_VERSION=%s", BUSVER))
 		return -ENOMEM;
-	return 1;
+	pr_info(LDDBUSM SNL, "UEVENT!");
+	return 0;
 }
 
 static ssize_t version_show(const struct bus_type *bus, char *buf)
