@@ -15,11 +15,8 @@ static struct usb_device_id usb_vpd_table[] = {
 };
 MODULE_DEVICE_TABLE(usb, usb_vpd_table);
 
-static int
-usb_vpd_probe(struct usb_interface *iface, const struct usb_device_id *id);
-
-static void
-usb_vpd_disconnect(struct usb_interface *iface);
+static int usb_vpd_probe(struct usb_interface *, const struct usb_device_id *);
+static void usb_vpd_disconnect(struct usb_interface *);
 
 static struct usb_driver usb_vpd_drv = {
 	.name = "usb_vpd",
