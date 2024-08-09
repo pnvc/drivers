@@ -206,6 +206,13 @@ static ssize_t scull_write(struct file *filp, const char __user *buf,
 		if (addr) {
 			pg_offset = __pa(buf) - __pa(addr);
 			*(char *)(pg_kmap + pg_offset) = '8';
+			if (pg_kmap) {
+				pr_info("write buf %p, page %p\n\
+					page addr %p, page kmap addr %p\n\
+					PA buf %lx, PA page addr %lx\n",
+					buf, pg, addr, pg_kmap, __pa(buf), __pa(addr));
+				kunmap(pg_kmap);
+			}
 		}
 	}
 
