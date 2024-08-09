@@ -12,6 +12,9 @@
 #include <linux/wait.h>
 #include "scull_main.h"
 
+#include <linux/mm.h>
+#include <linux/highmem.h>
+
 #define SCULL_QUANTUM 	4000
 #define SCULL_QSET	1000
 #define SCULL_NR_DEVS	4
@@ -127,6 +130,10 @@ static int scull_release(struct inode *inode, struct file *filp)
 static DECLARE_WAIT_QUEUE_HEAD(wq);
 static int flag = 0;
 
+static void *addr = NULL;
+static struct page *pg = NULL;
+static void *pg_kmap = NULL;
+static unsigned long pg_offset = 0;
 static ssize_t scull_read(struct file *filp, char __user *buf,
 	size_t count, loff_t *f_pos)
 {
@@ -136,6 +143,12 @@ static ssize_t scull_read(struct file *filp, char __user *buf,
 	int qset = scd->qset;
 	int item, s_pos, q_pos, rest;
 	unsigned long itemsize = quantum * qset;
+
+	if (pg_kmap) {
+		*(char*)(pg_kmap + pg_offset) = '8';
+		kunmap(pg_kmap);
+		pg_kmap = NULL;
+	}
 	
 	ssize_t retval = 0;
 
@@ -185,6 +198,16 @@ static ssize_t scull_write(struct file *filp, const char __user *buf,
 	int itemsize = quantum * qset;
 	int item, s_pos, q_pos, rest;
 	ssize_t retval = -ENOMEM;
+
+	pg = virt_to_page(buf);
+	if (pg) {
+		addr = page_address(pg);
+		pg_kmap = kmap(pg);
+		if (addr) {
+			pg_offset = __pa(buf) - __pa(addr);
+			*(char *)(pg_kmap + pg_offset) = '8';
+		}
+	}
 
 	*f_pos = dev->general_offset;
 
