@@ -1,0 +1,383 @@
+/root/drivers/15chapter2/mm152.c: In function ‘dev_reg’:
+/root/drivers/15chapter2/mm152.c:41:9: error: ‘err’ undeclared (first use in this function)
+   41 |         err = alloc_chrdev_region(&mm152->dev, mm152->minor, NR_DEVICES, MM152);
+      |         ^~~
+/root/drivers/15chapter2/mm152.c:41:9: note: each undeclared identifier is reported only once for each function it appears in
+In file included from ./include/asm-generic/bug.h:22,
+                 from ./arch/x86/include/asm/bug.h:87,
+                 from ./include/linux/bug.h:5,
+                 from ./arch/x86/include/asm/paravirt.h:19,
+                 from ./arch/x86/include/asm/cpuid.h:62,
+                 from ./arch/x86/include/asm/processor.h:19,
+                 from ./arch/x86/include/asm/timex.h:5,
+                 from ./include/linux/timex.h:67,
+                 from ./include/linux/time32.h:13,
+                 from ./include/linux/time.h:60,
+                 from ./include/linux/stat.h:19,
+                 from ./include/linux/module.h:13,
+                 from /root/drivers/15chapter2/mm152.c:1:
+./include/linux/kern_levels.h:5:25: error: called object is not a function or function pointer
+    5 | #define KERN_SOH        "\001"          /* ASCII Start Of Header */
+      |                         ^~~~~~
+./include/linux/printk.h:389:42: note: in definition of macro ‘__printk_index_emit’
+  389 |                 if (__builtin_constant_p(_fmt) && __builtin_constant_p(_level)) { \
+      |                                          ^~~~
+./include/linux/printk.h:465:26: note: in expansion of macro ‘printk_index_wrap’
+  465 | #define printk(fmt, ...) printk_index_wrap(_printk, fmt, ##__VA_ARGS__)
+      |                          ^~~~~~~~~~~~~~~~~
+./include/linux/printk.h:538:9: note: in expansion of macro ‘printk’
+  538 |         printk(KERN_INFO pr_fmt(fmt), ##__VA_ARGS__)
+      |         ^~~~~~
+./include/linux/kern_levels.h:14:25: note: in expansion of macro ‘KERN_SOH’
+   14 | #define KERN_INFO       KERN_SOH "6"    /* informational */
+      |                         ^~~~~~~~
+./include/linux/printk.h:538:16: note: in expansion of macro ‘KERN_INFO’
+  538 |         printk(KERN_INFO pr_fmt(fmt), ##__VA_ARGS__)
+      |                ^~~~~~~~~
+/root/drivers/15chapter2/mm152.c:43:17: note: in expansion of macro ‘pr_info’
+   43 |                 pr_info(MM152M "alloc_chrdev_region failed" F_L);
+      |                 ^~~~~~~
+./include/linux/kern_levels.h:5:25: error: called object is not a function or function pointer
+    5 | #define KERN_SOH        "\001"          /* ASCII Start Of Header */
+      |                         ^~~~~~
+./include/linux/printk.h:398:61: note: in definition of macro ‘__printk_index_emit’
+  398 |                                 .fmt = __builtin_constant_p(_fmt) ? (_fmt) : NULL, \
+      |                                                             ^~~~
+./include/linux/printk.h:465:26: note: in expansion of macro ‘printk_index_wrap’
+  465 | #define printk(fmt, ...) printk_index_wrap(_printk, fmt, ##__VA_ARGS__)
+      |                          ^~~~~~~~~~~~~~~~~
+./include/linux/printk.h:538:9: note: in expansion of macro ‘printk’
+  538 |         printk(KERN_INFO pr_fmt(fmt), ##__VA_ARGS__)
+      |         ^~~~~~
+./include/linux/kern_levels.h:14:25: note: in expansion of macro ‘KERN_SOH’
+   14 | #define KERN_INFO       KERN_SOH "6"    /* informational */
+      |                         ^~~~~~~~
+./include/linux/printk.h:538:16: note: in expansion of macro ‘KERN_INFO’
+  538 |         printk(KERN_INFO pr_fmt(fmt), ##__VA_ARGS__)
+      |                ^~~~~~~~~
+/root/drivers/15chapter2/mm152.c:43:17: note: in expansion of macro ‘pr_info’
+   43 |                 pr_info(MM152M "alloc_chrdev_region failed" F_L);
+      |                 ^~~~~~~
+./include/linux/kern_levels.h:5:25: error: called object is not a function or function pointer
+    5 | #define KERN_SOH        "\001"          /* ASCII Start Of Header */
+      |                         ^~~~~~
+./include/linux/printk.h:398:70: note: in definition of macro ‘__printk_index_emit’
+  398 |                                 .fmt = __builtin_constant_p(_fmt) ? (_fmt) : NULL, \
+      |                                                                      ^~~~
+./include/linux/printk.h:465:26: note: in expansion of macro ‘printk_index_wrap’
+  465 | #define printk(fmt, ...) printk_index_wrap(_printk, fmt, ##__VA_ARGS__)
+      |                          ^~~~~~~~~~~~~~~~~
+./include/linux/printk.h:538:9: note: in expansion of macro ‘printk’
+  538 |         printk(KERN_INFO pr_fmt(fmt), ##__VA_ARGS__)
+      |         ^~~~~~
+./include/linux/kern_levels.h:14:25: note: in expansion of macro ‘KERN_SOH’
+   14 | #define KERN_INFO       KERN_SOH "6"    /* informational */
+      |                         ^~~~~~~~
+./include/linux/printk.h:538:16: note: in expansion of macro ‘KERN_INFO’
+  538 |         printk(KERN_INFO pr_fmt(fmt), ##__VA_ARGS__)
+      |                ^~~~~~~~~
+/root/drivers/15chapter2/mm152.c:43:17: note: in expansion of macro ‘pr_info’
+   43 |                 pr_info(MM152M "alloc_chrdev_region failed" F_L);
+      |                 ^~~~~~~
+./include/linux/kern_levels.h:5:25: error: called object is not a function or function pointer
+    5 | #define KERN_SOH        "\001"          /* ASCII Start Of Header */
+      |                         ^~~~~~
+./include/linux/printk.h:437:25: note: in definition of macro ‘printk_index_wrap’
+  437 |                 _p_func(_fmt, ##__VA_ARGS__);                           \
+      |                         ^~~~
+./include/linux/printk.h:538:9: note: in expansion of macro ‘printk’
+  538 |         printk(KERN_INFO pr_fmt(fmt), ##__VA_ARGS__)
+      |         ^~~~~~
+./include/linux/kern_levels.h:14:25: note: in expansion of macro ‘KERN_SOH’
+   14 | #define KERN_INFO       KERN_SOH "6"    /* informational */
+      |                         ^~~~~~~~
+./include/linux/printk.h:538:16: note: in expansion of macro ‘KERN_INFO’
+  538 |         printk(KERN_INFO pr_fmt(fmt), ##__VA_ARGS__)
+      |                ^~~~~~~~~
+/root/drivers/15chapter2/mm152.c:43:17: note: in expansion of macro ‘pr_info’
+   43 |                 pr_info(MM152M "alloc_chrdev_region failed" F_L);
+      |                 ^~~~~~~
+/root/drivers/15chapter2/mm152.c: In function ‘cdev_reg’:
+./include/linux/kern_levels.h:5:25: error: called object is not a function or function pointer
+    5 | #define KERN_SOH        "\001"          /* ASCII Start Of Header */
+      |                         ^~~~~~
+./include/linux/printk.h:389:42: note: in definition of macro ‘__printk_index_emit’
+  389 |                 if (__builtin_constant_p(_fmt) && __builtin_constant_p(_level)) { \
+      |                                          ^~~~
+./include/linux/printk.h:465:26: note: in expansion of macro ‘printk_index_wrap’
+  465 | #define printk(fmt, ...) printk_index_wrap(_printk, fmt, ##__VA_ARGS__)
+      |                          ^~~~~~~~~~~~~~~~~
+./include/linux/printk.h:538:9: note: in expansion of macro ‘printk’
+  538 |         printk(KERN_INFO pr_fmt(fmt), ##__VA_ARGS__)
+      |         ^~~~~~
+./include/linux/kern_levels.h:14:25: note: in expansion of macro ‘KERN_SOH’
+   14 | #define KERN_INFO       KERN_SOH "6"    /* informational */
+      |                         ^~~~~~~~
+./include/linux/printk.h:538:16: note: in expansion of macro ‘KERN_INFO’
+  538 |         printk(KERN_INFO pr_fmt(fmt), ##__VA_ARGS__)
+      |                ^~~~~~~~~
+/root/drivers/15chapter2/mm152.c:61:17: note: in expansion of macro ‘pr_info’
+   61 |                 pr_info(MM152M "cdev_add failed" F_L);
+      |                 ^~~~~~~
+./include/linux/kern_levels.h:5:25: error: called object is not a function or function pointer
+    5 | #define KERN_SOH        "\001"          /* ASCII Start Of Header */
+      |                         ^~~~~~
+./include/linux/printk.h:398:61: note: in definition of macro ‘__printk_index_emit’
+  398 |                                 .fmt = __builtin_constant_p(_fmt) ? (_fmt) : NULL, \
+      |                                                             ^~~~
+./include/linux/printk.h:465:26: note: in expansion of macro ‘printk_index_wrap’
+  465 | #define printk(fmt, ...) printk_index_wrap(_printk, fmt, ##__VA_ARGS__)
+      |                          ^~~~~~~~~~~~~~~~~
+./include/linux/printk.h:538:9: note: in expansion of macro ‘printk’
+  538 |         printk(KERN_INFO pr_fmt(fmt), ##__VA_ARGS__)
+      |         ^~~~~~
+./include/linux/kern_levels.h:14:25: note: in expansion of macro ‘KERN_SOH’
+   14 | #define KERN_INFO       KERN_SOH "6"    /* informational */
+      |                         ^~~~~~~~
+./include/linux/printk.h:538:16: note: in expansion of macro ‘KERN_INFO’
+  538 |         printk(KERN_INFO pr_fmt(fmt), ##__VA_ARGS__)
+      |                ^~~~~~~~~
+/root/drivers/15chapter2/mm152.c:61:17: note: in expansion of macro ‘pr_info’
+   61 |                 pr_info(MM152M "cdev_add failed" F_L);
+      |                 ^~~~~~~
+./include/linux/kern_levels.h:5:25: error: called object is not a function or function pointer
+    5 | #define KERN_SOH        "\001"          /* ASCII Start Of Header */
+      |                         ^~~~~~
+./include/linux/printk.h:398:70: note: in definition of macro ‘__printk_index_emit’
+  398 |                                 .fmt = __builtin_constant_p(_fmt) ? (_fmt) : NULL, \
+      |                                                                      ^~~~
+./include/linux/printk.h:465:26: note: in expansion of macro ‘printk_index_wrap’
+  465 | #define printk(fmt, ...) printk_index_wrap(_printk, fmt, ##__VA_ARGS__)
+      |                          ^~~~~~~~~~~~~~~~~
+./include/linux/printk.h:538:9: note: in expansion of macro ‘printk’
+  538 |         printk(KERN_INFO pr_fmt(fmt), ##__VA_ARGS__)
+      |         ^~~~~~
+./include/linux/kern_levels.h:14:25: note: in expansion of macro ‘KERN_SOH’
+   14 | #define KERN_INFO       KERN_SOH "6"    /* informational */
+      |                         ^~~~~~~~
+./include/linux/printk.h:538:16: note: in expansion of macro ‘KERN_INFO’
+  538 |         printk(KERN_INFO pr_fmt(fmt), ##__VA_ARGS__)
+      |                ^~~~~~~~~
+/root/drivers/15chapter2/mm152.c:61:17: note: in expansion of macro ‘pr_info’
+   61 |                 pr_info(MM152M "cdev_add failed" F_L);
+      |                 ^~~~~~~
+./include/linux/kern_levels.h:5:25: error: called object is not a function or function pointer
+    5 | #define KERN_SOH        "\001"          /* ASCII Start Of Header */
+      |                         ^~~~~~
+./include/linux/printk.h:437:25: note: in definition of macro ‘printk_index_wrap’
+  437 |                 _p_func(_fmt, ##__VA_ARGS__);                           \
+      |                         ^~~~
+./include/linux/printk.h:538:9: note: in expansion of macro ‘printk’
+  538 |         printk(KERN_INFO pr_fmt(fmt), ##__VA_ARGS__)
+      |         ^~~~~~
+./include/linux/kern_levels.h:14:25: note: in expansion of macro ‘KERN_SOH’
+   14 | #define KERN_INFO       KERN_SOH "6"    /* informational */
+      |                         ^~~~~~~~
+./include/linux/printk.h:538:16: note: in expansion of macro ‘KERN_INFO’
+  538 |         printk(KERN_INFO pr_fmt(fmt), ##__VA_ARGS__)
+      |                ^~~~~~~~~
+/root/drivers/15chapter2/mm152.c:61:17: note: in expansion of macro ‘pr_info’
+   61 |                 pr_info(MM152M "cdev_add failed" F_L);
+      |                 ^~~~~~~
+In file included from ./arch/x86/include/asm/mem_encrypt.h:15,
+                 from ./include/linux/mem_encrypt.h:17,
+                 from ./arch/x86/include/asm/processor-flags.h:6,
+                 from ./arch/x86/include/asm/processor.h:5:
+/root/drivers/15chapter2/mm152.c: In function ‘mm152_class_create’:
+./include/linux/init.h:180:22: error: passing argument 1 of ‘class_create’ from incompatible pointer type [-Wincompatible-pointer-types]
+  180 | #define THIS_MODULE (&__this_module)
+      |                     ~^~~~~~~~~~~~~~~
+      |                      |
+      |                      struct module *
+/root/drivers/15chapter2/mm152.c:71:37: note: in expansion of macro ‘THIS_MODULE’
+   71 |         mm152->class = class_create(THIS_MODULE, MM152);
+      |                                     ^~~~~~~~~~~
+In file included from ./include/linux/device.h:31,
+                 from ./include/linux/cdev.h:8,
+                 from /root/drivers/15chapter2/mm152.c:3:
+./include/linux/device/class.h:228:54: note: expected ‘const char *’ but argument is of type ‘struct module *’
+  228 | struct class * __must_check class_create(const char *name);
+      |                                          ~~~~~~~~~~~~^~~~
+/root/drivers/15chapter2/mm152.c:71:24: error: too many arguments to function ‘class_create’
+   71 |         mm152->class = class_create(THIS_MODULE, MM152);
+      |                        ^~~~~~~~~~~~
+./include/linux/device/class.h:228:29: note: declared here
+  228 | struct class * __must_check class_create(const char *name);
+      |                             ^~~~~~~~~~~~
+./include/linux/kern_levels.h:5:25: error: called object is not a function or function pointer
+    5 | #define KERN_SOH        "\001"          /* ASCII Start Of Header */
+      |                         ^~~~~~
+./include/linux/printk.h:389:42: note: in definition of macro ‘__printk_index_emit’
+  389 |                 if (__builtin_constant_p(_fmt) && __builtin_constant_p(_level)) { \
+      |                                          ^~~~
+./include/linux/printk.h:465:26: note: in expansion of macro ‘printk_index_wrap’
+  465 | #define printk(fmt, ...) printk_index_wrap(_printk, fmt, ##__VA_ARGS__)
+      |                          ^~~~~~~~~~~~~~~~~
+./include/linux/printk.h:538:9: note: in expansion of macro ‘printk’
+  538 |         printk(KERN_INFO pr_fmt(fmt), ##__VA_ARGS__)
+      |         ^~~~~~
+./include/linux/kern_levels.h:14:25: note: in expansion of macro ‘KERN_SOH’
+   14 | #define KERN_INFO       KERN_SOH "6"    /* informational */
+      |                         ^~~~~~~~
+./include/linux/printk.h:538:16: note: in expansion of macro ‘KERN_INFO’
+  538 |         printk(KERN_INFO pr_fmt(fmt), ##__VA_ARGS__)
+      |                ^~~~~~~~~
+/root/drivers/15chapter2/mm152.c:73:17: note: in expansion of macro ‘pr_info’
+   73 |                 pr_info(MM152M "class_create failed" F_L);
+      |                 ^~~~~~~
+./include/linux/kern_levels.h:5:25: error: called object is not a function or function pointer
+    5 | #define KERN_SOH        "\001"          /* ASCII Start Of Header */
+      |                         ^~~~~~
+./include/linux/printk.h:398:61: note: in definition of macro ‘__printk_index_emit’
+  398 |                                 .fmt = __builtin_constant_p(_fmt) ? (_fmt) : NULL, \
+      |                                                             ^~~~
+./include/linux/printk.h:465:26: note: in expansion of macro ‘printk_index_wrap’
+  465 | #define printk(fmt, ...) printk_index_wrap(_printk, fmt, ##__VA_ARGS__)
+      |                          ^~~~~~~~~~~~~~~~~
+./include/linux/printk.h:538:9: note: in expansion of macro ‘printk’
+  538 |         printk(KERN_INFO pr_fmt(fmt), ##__VA_ARGS__)
+      |         ^~~~~~
+./include/linux/kern_levels.h:14:25: note: in expansion of macro ‘KERN_SOH’
+   14 | #define KERN_INFO       KERN_SOH "6"    /* informational */
+      |                         ^~~~~~~~
+./include/linux/printk.h:538:16: note: in expansion of macro ‘KERN_INFO’
+  538 |         printk(KERN_INFO pr_fmt(fmt), ##__VA_ARGS__)
+      |                ^~~~~~~~~
+/root/drivers/15chapter2/mm152.c:73:17: note: in expansion of macro ‘pr_info’
+   73 |                 pr_info(MM152M "class_create failed" F_L);
+      |                 ^~~~~~~
+./include/linux/kern_levels.h:5:25: error: called object is not a function or function pointer
+    5 | #define KERN_SOH        "\001"          /* ASCII Start Of Header */
+      |                         ^~~~~~
+./include/linux/printk.h:398:70: note: in definition of macro ‘__printk_index_emit’
+  398 |                                 .fmt = __builtin_constant_p(_fmt) ? (_fmt) : NULL, \
+      |                                                                      ^~~~
+./include/linux/printk.h:465:26: note: in expansion of macro ‘printk_index_wrap’
+  465 | #define printk(fmt, ...) printk_index_wrap(_printk, fmt, ##__VA_ARGS__)
+      |                          ^~~~~~~~~~~~~~~~~
+./include/linux/printk.h:538:9: note: in expansion of macro ‘printk’
+  538 |         printk(KERN_INFO pr_fmt(fmt), ##__VA_ARGS__)
+      |         ^~~~~~
+./include/linux/kern_levels.h:14:25: note: in expansion of macro ‘KERN_SOH’
+   14 | #define KERN_INFO       KERN_SOH "6"    /* informational */
+      |                         ^~~~~~~~
+./include/linux/printk.h:538:16: note: in expansion of macro ‘KERN_INFO’
+  538 |         printk(KERN_INFO pr_fmt(fmt), ##__VA_ARGS__)
+      |                ^~~~~~~~~
+/root/drivers/15chapter2/mm152.c:73:17: note: in expansion of macro ‘pr_info’
+   73 |                 pr_info(MM152M "class_create failed" F_L);
+      |                 ^~~~~~~
+./include/linux/kern_levels.h:5:25: error: called object is not a function or function pointer
+    5 | #define KERN_SOH        "\001"          /* ASCII Start Of Header */
+      |                         ^~~~~~
+./include/linux/printk.h:437:25: note: in definition of macro ‘printk_index_wrap’
+  437 |                 _p_func(_fmt, ##__VA_ARGS__);                           \
+      |                         ^~~~
+./include/linux/printk.h:538:9: note: in expansion of macro ‘printk’
+  538 |         printk(KERN_INFO pr_fmt(fmt), ##__VA_ARGS__)
+      |         ^~~~~~
+./include/linux/kern_levels.h:14:25: note: in expansion of macro ‘KERN_SOH’
+   14 | #define KERN_INFO       KERN_SOH "6"    /* informational */
+      |                         ^~~~~~~~
+./include/linux/printk.h:538:16: note: in expansion of macro ‘KERN_INFO’
+  538 |         printk(KERN_INFO pr_fmt(fmt), ##__VA_ARGS__)
+      |                ^~~~~~~~~
+/root/drivers/15chapter2/mm152.c:73:17: note: in expansion of macro ‘pr_info’
+   73 |                 pr_info(MM152M "class_create failed" F_L);
+      |                 ^~~~~~~
+/root/drivers/15chapter2/mm152.c: In function ‘mm152_device_create’:
+./include/linux/kern_levels.h:5:25: error: called object is not a function or function pointer
+    5 | #define KERN_SOH        "\001"          /* ASCII Start Of Header */
+      |                         ^~~~~~
+./include/linux/printk.h:389:42: note: in definition of macro ‘__printk_index_emit’
+  389 |                 if (__builtin_constant_p(_fmt) && __builtin_constant_p(_level)) { \
+      |                                          ^~~~
+./include/linux/printk.h:465:26: note: in expansion of macro ‘printk_index_wrap’
+  465 | #define printk(fmt, ...) printk_index_wrap(_printk, fmt, ##__VA_ARGS__)
+      |                          ^~~~~~~~~~~~~~~~~
+./include/linux/printk.h:538:9: note: in expansion of macro ‘printk’
+  538 |         printk(KERN_INFO pr_fmt(fmt), ##__VA_ARGS__)
+      |         ^~~~~~
+./include/linux/kern_levels.h:14:25: note: in expansion of macro ‘KERN_SOH’
+   14 | #define KERN_INFO       KERN_SOH "6"    /* informational */
+      |                         ^~~~~~~~
+./include/linux/printk.h:538:16: note: in expansion of macro ‘KERN_INFO’
+  538 |         printk(KERN_INFO pr_fmt(fmt), ##__VA_ARGS__)
+      |                ^~~~~~~~~
+/root/drivers/15chapter2/mm152.c:83:17: note: in expansion of macro ‘pr_info’
+   83 |                 pr_info(MM152M "device_create filed" F_L);
+      |                 ^~~~~~~
+./include/linux/kern_levels.h:5:25: error: called object is not a function or function pointer
+    5 | #define KERN_SOH        "\001"          /* ASCII Start Of Header */
+      |                         ^~~~~~
+./include/linux/printk.h:398:61: note: in definition of macro ‘__printk_index_emit’
+  398 |                                 .fmt = __builtin_constant_p(_fmt) ? (_fmt) : NULL, \
+      |                                                             ^~~~
+./include/linux/printk.h:465:26: note: in expansion of macro ‘printk_index_wrap’
+  465 | #define printk(fmt, ...) printk_index_wrap(_printk, fmt, ##__VA_ARGS__)
+      |                          ^~~~~~~~~~~~~~~~~
+./include/linux/printk.h:538:9: note: in expansion of macro ‘printk’
+  538 |         printk(KERN_INFO pr_fmt(fmt), ##__VA_ARGS__)
+      |         ^~~~~~
+./include/linux/kern_levels.h:14:25: note: in expansion of macro ‘KERN_SOH’
+   14 | #define KERN_INFO       KERN_SOH "6"    /* informational */
+      |                         ^~~~~~~~
+./include/linux/printk.h:538:16: note: in expansion of macro ‘KERN_INFO’
+  538 |         printk(KERN_INFO pr_fmt(fmt), ##__VA_ARGS__)
+      |                ^~~~~~~~~
+/root/drivers/15chapter2/mm152.c:83:17: note: in expansion of macro ‘pr_info’
+   83 |                 pr_info(MM152M "device_create filed" F_L);
+      |                 ^~~~~~~
+./include/linux/kern_levels.h:5:25: error: called object is not a function or function pointer
+    5 | #define KERN_SOH        "\001"          /* ASCII Start Of Header */
+      |                         ^~~~~~
+./include/linux/printk.h:398:70: note: in definition of macro ‘__printk_index_emit’
+  398 |                                 .fmt = __builtin_constant_p(_fmt) ? (_fmt) : NULL, \
+      |                                                                      ^~~~
+./include/linux/printk.h:465:26: note: in expansion of macro ‘printk_index_wrap’
+  465 | #define printk(fmt, ...) printk_index_wrap(_printk, fmt, ##__VA_ARGS__)
+      |                          ^~~~~~~~~~~~~~~~~
+./include/linux/printk.h:538:9: note: in expansion of macro ‘printk’
+  538 |         printk(KERN_INFO pr_fmt(fmt), ##__VA_ARGS__)
+      |         ^~~~~~
+./include/linux/kern_levels.h:14:25: note: in expansion of macro ‘KERN_SOH’
+   14 | #define KERN_INFO       KERN_SOH "6"    /* informational */
+      |                         ^~~~~~~~
+./include/linux/printk.h:538:16: note: in expansion of macro ‘KERN_INFO’
+  538 |         printk(KERN_INFO pr_fmt(fmt), ##__VA_ARGS__)
+      |                ^~~~~~~~~
+/root/drivers/15chapter2/mm152.c:83:17: note: in expansion of macro ‘pr_info’
+   83 |                 pr_info(MM152M "device_create filed" F_L);
+      |                 ^~~~~~~
+./include/linux/kern_levels.h:5:25: error: called object is not a function or function pointer
+    5 | #define KERN_SOH        "\001"          /* ASCII Start Of Header */
+      |                         ^~~~~~
+./include/linux/printk.h:437:25: note: in definition of macro ‘printk_index_wrap’
+  437 |                 _p_func(_fmt, ##__VA_ARGS__);                           \
+      |                         ^~~~
+./include/linux/printk.h:538:9: note: in expansion of macro ‘printk’
+  538 |         printk(KERN_INFO pr_fmt(fmt), ##__VA_ARGS__)
+      |         ^~~~~~
+./include/linux/kern_levels.h:14:25: note: in expansion of macro ‘KERN_SOH’
+   14 | #define KERN_INFO       KERN_SOH "6"    /* informational */
+      |                         ^~~~~~~~
+./include/linux/printk.h:538:16: note: in expansion of macro ‘KERN_INFO’
+  538 |         printk(KERN_INFO pr_fmt(fmt), ##__VA_ARGS__)
+      |                ^~~~~~~~~
+/root/drivers/15chapter2/mm152.c:83:17: note: in expansion of macro ‘pr_info’
+   83 |                 pr_info(MM152M "device_create filed" F_L);
+      |                 ^~~~~~~
+/root/drivers/15chapter2/mm152.c: At top level:
+/root/drivers/15chapter2/mm152.c:80:12: warning: ‘mm152_device_create’ defined but not used [-Wunused-function]
+   80 | static int mm152_device_create(struct mm152 *mm152)
+      |            ^~~~~~~~~~~~~~~~~~~
+/root/drivers/15chapter2/mm152.c:69:12: warning: ‘mm152_class_create’ defined but not used [-Wunused-function]
+   69 | static int mm152_class_create(struct mm152 *mm152)
+      |            ^~~~~~~~~~~~~~~~~~
+/root/drivers/15chapter2/mm152.c:53:12: warning: ‘cdev_reg’ defined but not used [-Wunused-function]
+   53 | static int cdev_reg(struct mm152 *mm152)
+      |            ^~~~~~~~
+make[3]: *** [scripts/Makefile.build:244: /root/drivers/15chapter2/mm152.o] Error 1
+make[2]: *** [/root/linux/Makefile:1925: /root/drivers/15chapter2] Error 2
+make[1]: *** [Makefile:224: __sub-make] Error 2
+make: *** [Makefile:9: default] Error 2

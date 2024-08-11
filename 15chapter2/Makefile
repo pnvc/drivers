@@ -1,4 +1,4 @@
-MODULE_NAME = mm151
+MODULE_NAME = mm152
 
 ifneq ($(KERNELRELEASE),)
 	obj-m = $(MODULE_NAME).o
