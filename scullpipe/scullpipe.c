@@ -134,7 +134,7 @@ static int reg_cdev(void)
 
 static int create_class_and_node(void)
 {
-	sp.dev_class = class_create(THIS_MODULE, SP);
+	sp.dev_class = class_create(SP);
 	if (!sp.dev_class)
 		goto failed_class_create;
 
