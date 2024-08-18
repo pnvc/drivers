@@ -2,6 +2,7 @@
 #include <linux/init.h>
 #include <linux/cdev.h>
 #include <linux/fs.h>
+#include <linux/mm.h>
 
 
 #define MM152 "mm152"
@@ -9,8 +10,8 @@
 #define NR_DEVICES 1
 #define F_L ". %s %u\n"
 
-/* decl */
 struct mm152 {
+	char buf[100];
 	int major, minor;
 	dev_t dev;
 	struct cdev cdev;
@@ -23,13 +24,13 @@ static int cdev_reg(struct mm152 *); /* reg struct cdev */
 static int mm152_class_create(struct mm152 *); /* create mm152 class */
 static int mm152_device_create(struct mm152 *); /* create mm152 device */
 static int mm152_mmap(struct file *, struct vm_area_struct *); // mmap for device
-/* decl */
+static int mm152_open(struct inode *, struct file *); // open mm152 dev
 
-/* defi */
 static struct mm152 mm152 = {
 	.dev = 0,
 	.fops = {
-		.mmap = mm152_mmap
+		.mmap = mm152_mmap,
+		.open = mm152_open
 	}
 };
 
@@ -71,7 +72,7 @@ static int cdev_reg(struct mm152 *mm152)
 
 static int mm152_class_create(struct mm152 *mm152)
 {
-	mm152->class = class_create(MM152);
+	mm152->class = class_create(THIS_MODULE,MM152);
 	if (!mm152->class) {
 		pr_info(MM152M "class_create failed" F_L, __FILE__, __LINE__);
 		return -ENOMEM;
@@ -90,32 +91,41 @@ static int mm152_device_create(struct mm152 *mm152)
 	return 0;
 }
 
-static int mm152_mmap(struct file *filp, struct vm_area_struct *vma)
+static int mm152_open(struct inode *i, struct file *f)
 {
+	struct mm152 *mm152;
+
+	mm152 = container_of(i->i_cdev, struct mm152, cdev);
+	f->private_data = mm152;
+
 	return 0;
 }
-/* defi */
 
-/* init */
-/* init */
+static int mm152_mmap(struct file *filp, struct vm_area_struct *vma)
+{
+	if (remap_pfn_range(vma, vma->vm_start, vma->vm_pgoff,
+				vma->vm_end - vma->vm_start,
+				vma->vm_page_prot))
+		return -EAGAIN;
+	
+	return 0;
+}
 
 static int __init mm152_init(void)
 {
 	int err;
 
-	pr_info(MM152M "1\n");
 	err = dev_reg(&mm152);
+	if (err)
 		return err;
 
 
-	pr_info(MM152M "2\n");
 	err = mm152_class_create(&mm152);
 	if (err) {
 		unregister_chrdev_region(mm152.dev, NR_DEVICES);
 		return err;
 	}
 
-	pr_info(MM152M "3\n");
 	err = mm152_device_create(&mm152);
 	if (err) {
 		class_destroy(mm152.class);
@@ -123,7 +133,6 @@ static int __init mm152_init(void)
 		return err;
 	}
 
-	pr_info(MM152M "4\n");
 	err = cdev_reg(&mm152);
 	if (err) {
 		device_destroy(mm152.class, mm152.dev);
