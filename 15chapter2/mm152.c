@@ -24,6 +24,7 @@ static int cdev_reg(struct mm152 *); /* reg struct cdev */
 static int mm152_class_create(struct mm152 *); /* create mm152 class */
 static int mm152_device_create(struct mm152 *); /* create mm152 device */
 static int mm152_mmap(struct file *, struct vm_area_struct *); // mmap for device
+static int mm152_mremap(struct vm_area_struct *); // mremap for device
 static void mm152_mmap_open(struct vm_area_struct *);
 static void mm152_mmap_close(struct vm_area_struct *);
 static int mm152_open(struct inode *, struct file *); // open mm152 dev
@@ -44,7 +45,8 @@ static struct mm152 mm152 = {
 
 static struct vm_operations_struct mm152_vma_ops = {
 	.open = mm152_mmap_open,
-	.close = mm152_mmap_close
+	.close = mm152_mmap_close,
+	.mremap = mm152_mremap,
 };
 
 static int dev_reg(struct mm152 *mm152)
@@ -85,7 +87,7 @@ static int cdev_reg(struct mm152 *mm152)
 
 static int mm152_class_create(struct mm152 *mm152)
 {
-	mm152->class = class_create(THIS_MODULE,MM152);
+	mm152->class = class_create(MM152);
 	if (!mm152->class) {
 		pr_info(MM152M "class_create failed" F_L, __FILE__, __LINE__);
 		return -ENOMEM;
@@ -140,8 +142,14 @@ static int mm152_mmap(struct file *filp, struct vm_area_struct *vma)
 				vma->vm_end - vma->vm_start,
 				vma->vm_page_prot))
 		return -EAGAIN;
-	vma->vm_ops = &mm152_vma_ops;	
+	vma->vm_ops = &mm152_vma_ops;
 	mm152_mmap_open(vma);
+	return 0;
+}
+
+static int mm152_mremap(struct vm_area_struct *vma)
+{
+	pr_info(MM152M "mremap called\n");
 	return 0;
 }
 
