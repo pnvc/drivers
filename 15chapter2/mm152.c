@@ -25,6 +25,8 @@ static int mm152_class_create(struct mm152 *); /* create mm152 class */
 static int mm152_device_create(struct mm152 *); /* create mm152 device */
 static int mm152_mmap(struct file *, struct vm_area_struct *); // mmap for device
 static int mm152_mremap(struct vm_area_struct *); // mremap for device
+static int mm152_may_split(struct vm_area_struct *, unsigned long); // before mremap ?
+static vm_fault_t mm152_fault(struct vm_fault *); // fault after mmap?
 static void mm152_mmap_open(struct vm_area_struct *);
 static void mm152_mmap_close(struct vm_area_struct *);
 static int mm152_open(struct inode *, struct file *); // open mm152 dev
@@ -47,6 +49,8 @@ static struct vm_operations_struct mm152_vma_ops = {
 	.open = mm152_mmap_open,
 	.close = mm152_mmap_close,
 	.mremap = mm152_mremap,
+	.may_split = mm152_may_split,
+	.fault = mm152_fault,
 };
 
 static int dev_reg(struct mm152 *mm152)
@@ -144,6 +148,18 @@ static int mm152_mmap(struct file *filp, struct vm_area_struct *vma)
 		return -EAGAIN;
 	vma->vm_ops = &mm152_vma_ops;
 	mm152_mmap_open(vma);
+	return 0;
+}
+
+static int mm152_may_split(struct vm_area_struct *area, unsigned long addr)
+{
+	pr_info(MM152M "may_split called\n");
+	return 0;
+}
+
+static vm_fault_t mm152_fault(struct vm_fault *)
+{
+	pr_info(MM152M "fault called\n");
 	return 0;
 }
 

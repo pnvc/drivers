@@ -1,0 +1,1 @@
+dmesg | grep mm154 | tail -15
