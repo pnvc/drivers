@@ -27,6 +27,7 @@ static int mm152_mmap(struct file *, struct vm_area_struct *); // mmap for devic
 static int mm152_mremap(struct vm_area_struct *); // mremap for device
 static int mm152_may_split(struct vm_area_struct *, unsigned long); // before mremap ?
 static vm_fault_t mm152_fault(struct vm_fault *); // fault after mmap?
+static int mm152_mprotect(struct vm_area_struct *, unsigned long, unsigned long, unsigned long);
 static void mm152_mmap_open(struct vm_area_struct *);
 static void mm152_mmap_close(struct vm_area_struct *);
 static int mm152_open(struct inode *, struct file *); // open mm152 dev
@@ -51,6 +52,7 @@ static struct vm_operations_struct mm152_vma_ops = {
 	.mremap = mm152_mremap,
 	.may_split = mm152_may_split,
 	.fault = mm152_fault,
+	.mprotect = mm152_mprotect,
 };
 
 static int dev_reg(struct mm152 *mm152)
@@ -140,12 +142,13 @@ static int mm152_mmap(struct file *filp, struct vm_area_struct *vma)
 {
 	struct mm152 *m = filp->private_data;
 	//m->buf = page_to_virt(pfn_to_page(vma->vm_pgoff));
-	vma->vm_pgoff = __pa(m->buf) >> PAGE_SHIFT;
-
+	//vma->vm_pgoff = __pa(m->buf) >> PAGE_SHIFT;
+/*
 	if (remap_pfn_range(vma, vma->vm_start, vma->vm_pgoff,
 				vma->vm_end - vma->vm_start,
 				vma->vm_page_prot))
 		return -EAGAIN;
+*/
 	vma->vm_ops = &mm152_vma_ops;
 	mm152_mmap_open(vma);
 	return 0;
@@ -163,6 +166,12 @@ static vm_fault_t mm152_fault(struct vm_fault *)
 	return 0;
 }
 
+static int mm152_mprotect(struct vm_area_struct *vma, unsigned long start, unsigned long end, unsigned long nflags)
+{
+	pr_info(MM152M "mprotect\n");
+	return 0;
+}
+
 static int mm152_mremap(struct vm_area_struct *vma)
 {
 	pr_info(MM152M "mremap called\n");
@@ -172,25 +181,28 @@ static int mm152_mremap(struct vm_area_struct *vma)
 static void mm152_mmap_open(struct vm_area_struct *vma)
 {
 	pr_info(MM152M"vma open\n"
-MM152M"%lx virt\n"
-MM152M"%p virt to page\n"
-MM152M"%p page addr\n"
-MM152M"%lx page addr to phys\n"
-MM152M"%lx virt to phys\n"
+MM152M"%lx vm_start\n"
+MM152M"%px vm_start to page\n"
+MM152M"%px page virt addr\n"
+MM152M"%lx page virt addr to phys\n"
+MM152M"%lx vm_start to phys\n"
 MM152M"%lx page to pfn\n"
-MM152M"%p pfn to page\n"
-MM152M"%lx kern pfn\n"
-MM152M"%lx kern pfn to phys\n"
-MM152M"%p kern pfn to page\n"
-MM152M"%p kern page to page addr\n"
-MM152M"%p kern page to virt\n",
-		vma->vm_start, virt_to_page(vma->vm_start),
+MM152M"%px pfn to page\n"
+MM152M"%lx vm_pgoff\n"
+MM152M"%lx vm_pgoff << PAGE_SHIT\n"
+MM152M"%px vm_pgoff to page\n"
+MM152M"%px kern page to page addr\n"
+MM152M"%px kern page to virt\n",
+		vma->vm_start,
+		virt_to_page(vma->vm_start),
 		page_address(virt_to_page(vma->vm_start)),
 		__pa(page_address(virt_to_page(vma->vm_start))),
-		__pa(vma->vm_start), page_to_pfn(virt_to_page(vma->vm_start)),
+		__pa(vma->vm_start),
+		page_to_pfn(virt_to_page(vma->vm_start)),
 		pfn_to_page(page_to_pfn(virt_to_page(vma->vm_start))),
 		vma->vm_pgoff,
-		vma->vm_pgoff << PAGE_SHIFT, pfn_to_page(vma->vm_pgoff),
+		vma->vm_pgoff << PAGE_SHIFT,
+		pfn_to_page(vma->vm_pgoff),
 		page_address(pfn_to_page(vma->vm_pgoff)),
 		page_to_virt(pfn_to_page(vma->vm_pgoff)));
 }
@@ -203,12 +215,12 @@ static int __init mm152_init(void)
 {
 	int err;
 	
-	mm152.buf = kmalloc(PAGE_SIZE, GFP_KERNEL);
+	mm152.buf = kmalloc(PAGE_SIZE * 5, GFP_KERNEL);
 	if (!mm152.buf) {
 		pr_info(MM152M"failed kmalloc"F_L, __FILE__, __LINE__);
 		return -ENOMEM;
 	}
-	pr_info(MM152M"mm152 virt buf: %p\n", mm152.buf);
+	pr_info(MM152M"mm152 virt buf: %px\n", mm152.buf);
 
 	err = dev_reg(&mm152);
 	if (err)
