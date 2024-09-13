@@ -20,12 +20,10 @@ static int __init mm154_init(void)
 			__pa(d) >> PAGE_SHIFT,
 			__pa(p) >> PAGE_SHIFT);
 
-/*
 	vfree(v);
 	kfree(k);
 	kfree(d);
 	free_pages((unsigned long)p, 2);
-*/
 
 	return 0;
 }
