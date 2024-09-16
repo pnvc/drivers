@@ -89,8 +89,6 @@ static ssize_t mm153_write(struct file *filp, const char __user *ubuf, size_t co
 {
 	struct mm153 *dev = filp->private_data;
 	size_t retval;
-	struct page *pages[NR_PAGES];
-	char *page_kmapped;
 
 	if (PAGE_SIZE - *offset < count)
 		count = PAGE_SIZE - *offset;
@@ -119,24 +117,23 @@ static ssize_t mm153_write(struct file *filp, const char __user *ubuf, size_t co
 		goto end_unlock;
 	}
 
+	struct page *pages[NR_PAGES];
+	char *page_kmapped;
 	long addr;
 	int err = kstrtol(dev->buf + *offset, 0, &addr);
 	if (err) {
 		pr_info(MM153M"fail kstrtol"nl);
 	} else {
-		pr_info(MM153M"get user addr: %li"nl, addr);
+		pr_info(MM153M"get user addr: %xp"nl, addr);
 		err = get_user_pages_fast(addr, NR_PAGES, 1, pages);
 		if (err <= 0) {
 			pr_info(MM153M"fail get_user_pages_fast"nl);
 		} else {
 			pr_info(MM153M"get_user_pages_fast %d pages"nl, err);
 			page_kmapped = (char *)kmap(pages[0]);
-			page_kmapped[0] = 'p';
-			page_kmapped[1] = 'e';
-			page_kmapped[2] = 's';
-			page_kmapped[3] = 'o';
-			page_kmapped[4] = 's';
-			page_kmapped[5] = 0;
+			strcpy(page_kmapped + (addr & 0xfff), "pesos*");
+
+			kunmap(pages[0]);
 
 			if (!PageReserved(pages[0]))
 				SetPageDirty(pages[0]);
