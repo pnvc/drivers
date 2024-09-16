@@ -124,7 +124,7 @@ static ssize_t mm153_write(struct file *filp, const char __user *ubuf, size_t co
 	if (err) {
 		pr_info(MM153M"fail kstrtol"nl);
 	} else {
-		pr_info(MM153M"get user addr: %xp"nl, addr);
+		pr_info(MM153M"get user addr: 0x%lx"nl, addr);
 		err = get_user_pages_fast(addr, NR_PAGES, 1, pages);
 		if (err <= 0) {
 			pr_info(MM153M"fail get_user_pages_fast"nl);
