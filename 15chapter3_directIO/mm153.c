@@ -131,7 +131,7 @@ static ssize_t mm153_write(struct file *filp, const char __user *ubuf, size_t co
 		} else {
 			pr_info(MM153M"get_user_pages_fast %d pages"nl, err);
 			page_kmapped = (char *)kmap(pages[0]);
-			strcpy(page_kmapped + (addr & 0xfff), "pesos*");
+			strcpy(page_kmapped + (addr - ((addr >> PAGE_SHIFT) << PAGE_SHIFT)), "pesosik je");
 
 			kunmap(pages[0]);
 
@@ -170,7 +170,7 @@ static int __init mm153_init(void)
 
 	major = MAJOR(mm153.dev);
 
-	mm153.class = class_create(MM153);
+	mm153.class = class_create(THIS_MODULE, MM153);
 	if (!mm153.class) {
 		pr_info(MM153M"fail class_create"nl);
 		goto fail_class_create;
