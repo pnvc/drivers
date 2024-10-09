@@ -170,7 +170,7 @@ static int __init mm153_init(void)
 
 	major = MAJOR(mm153.dev);
 
-	mm153.class = class_create(THIS_MODULE, MM153);
+	mm153.class = class_create(/*THIS_MODULE, */MM153);
 	if (!mm153.class) {
 		pr_info(MM153M"fail class_create"nl);
 		goto fail_class_create;
