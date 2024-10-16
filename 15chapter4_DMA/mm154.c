@@ -107,7 +107,7 @@ static int __init mm154_init(void)
 		goto error;
 	}
 
-	msg("started");
+	msg("started je");
 	return retval;
 
 error:
