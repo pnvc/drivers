@@ -13,9 +13,12 @@
 // BUS
 static int ldd_match(struct device *dev, struct device_driver *drv)
 {
-	if ((!strncmp(dev_name(dev), "kek", 3) && !strncmp(drv->name, "kek_drv", 7)) ||
-		(!strncmp(dev_name(dev), "lol", 3) && !strncmp(drv->name, "lol_drv", 7))) {
-		pr_info(LDDBUSM "device: %s with driver: %s are added", dev_name(dev), drv->name);
+	if ((!strncmp(dev_name(dev), "kek", 3) &&
+				!strncmp(drv->name, "kek_drv", 7)) ||
+				(!strncmp(dev_name(dev), "lol", 3) &&
+				 !strncmp(drv->name, "lol_drv", 7))) {
+		pr_info(LDDBUSM "device: %s with driver: %s are added",
+				dev_name(dev), drv->name);
 		return 1;
 	}
 	return 0;
@@ -65,7 +68,8 @@ static void ldd_class_release(const struct class *class)
 	pr_info(LDDBUSM SNL, "ldd class released");
 }
 
-static ssize_t ver_show(const struct class *class, const struct class_attribute *attr, char *buf)
+static ssize_t ver_show(const struct class *class,
+		const struct class_attribute *attr, char *buf)
 {
 	return snprintf(buf, PAGE_SIZE, "%s\n", class_ver);
 }

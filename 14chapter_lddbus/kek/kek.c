@@ -1,6 +1,8 @@
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/device.h>
+#include <linux/slab.h>
+#include <linux/dma-mapping.h>
 
 #include "../lddbus.h"
 
@@ -12,6 +14,9 @@ static char v[] = "000.000.000.034";
 static char name[] = "kek";
 
 struct kek_dev {
+	dma_addr_t dmabuf;
+	void *dmabuf_virt;
+	char *buf;
 	char *msg;
 	struct ldd_dev ldev;
 	struct device class_dev;
@@ -72,13 +77,46 @@ static int register_kek_dev(struct kek_dev *keke)
 
 static int __init kek_init(void)
 {
+	int retval;
+	retval = register_kek_dev(&kek);
+	if (retval)
+		return retval;
+	kek.buf = kmalloc(PAGE_SIZE, GFP_KERNEL);
+	if (!kek.buf) {
+		device_remove_file(&kek.ldev.dev, &dev_attr_ver);
+		device_unregister(&kek.ldev.dev);
+		device_remove_file(&kek.class_dev, &dev_attr_version);
+		device_unregister(&kek.class_dev);
+		pr_warn("kek: fail kmalloc init\n");
+		return -ENOMEM;
+	}
+
+	kek.dmabuf_virt = dma_alloc_coherent(&kek.ldev.dev, PAGE_SIZE*2,
+			&kek.dmabuf, GFP_KERNEL);
+	
+	if (!kek.dmabuf_virt) {
+		pr_warn("kek: fail dma_alloc_coherent\n");
+		kfree(kek.buf);
+		device_remove_file(&kek.ldev.dev, &dev_attr_ver);
+		device_unregister(&kek.ldev.dev);
+		device_remove_file(&kek.class_dev, &dev_attr_version);
+		device_unregister(&kek.class_dev);
+		return -ENOMEM;
+	}
+
+	pr_info("kek: kmalloc: %px\ndmabuf_virt: %px\ndmabuf: %llu\n", kek.buf,
+			kek.dmabuf_virt, kek.dmabuf);
+
 	pr_info(KEKM SNL, "init");
-	return register_kek_dev(&kek);
+	return 0;
 }
 
 static void __exit kek_exit(void)
 {
 	pr_info(KEKM SNL, "exit");
+	kfree(kek.buf);
+	dma_free_coherent(&kek.ldev.dev, PAGE_SIZE*2, kek.dmabuf_virt,
+			kek.dmabuf);
 	device_remove_file(&kek.ldev.dev, &dev_attr_ver);
 	device_unregister(&kek.ldev.dev);
 
