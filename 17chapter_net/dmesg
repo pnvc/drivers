@@ -1,0 +1,1 @@
+dmesg | grep mynet | tail -15

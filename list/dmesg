@@ -1,0 +1,1 @@
+dmesg | grep slist | tail -15

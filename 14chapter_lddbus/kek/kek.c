@@ -3,6 +3,7 @@
 #include <linux/device.h>
 #include <linux/slab.h>
 #include <linux/dma-mapping.h>
+#include <linux/dmapool.h>
 
 #include "../lddbus.h"
 
@@ -14,8 +15,6 @@ static char v[] = "000.000.000.034";
 static char name[] = "kek";
 
 struct kek_dev {
-	dma_addr_t dmabuf;
-	void *dmabuf_virt;
 	char *buf;
 	char *msg;
 	struct ldd_dev ldev;
@@ -23,6 +22,8 @@ struct kek_dev {
 };
 #define to_kek_dev(dev) container_of(dev, struct kek_dev, ldev)
 #define to_kek_dev_from_class_dev(dev) container_of(dev, struct kek_dev, class_dev)
+
+static struct kek_dev kek;
 
 static ssize_t kek_show_ver(struct device *dev, struct device_attribute *attr, char *buf)
 {
@@ -42,8 +43,6 @@ static ssize_t kek_class_show_ver(struct device *dev, struct device_attribute *a
 	return snprintf(buf, PAGE_SIZE, "%s\n", kd->msg);
 }
 static DEVICE_ATTR(version, 0664, kek_class_show_ver, kek_class_set_ver);
-
-static struct kek_dev kek;
 
 static int register_kek_dev(struct kek_dev *keke)
 {
@@ -91,8 +90,54 @@ static int __init kek_init(void)
 		return -ENOMEM;
 	}
 
-	kek.dmabuf_virt = dma_alloc_coherent(&kek.ldev.dev, PAGE_SIZE*2,
-			&kek.dmabuf, GFP_KERNEL);
+	char *buf = kmalloc(PAGE_SIZE, GFP_KERNEL);
+	if (buf) {
+		dma_addr_t bus = dma_map_single(&kek.ldev.dev, buf, 123,
+				DMA_TO_DEVICE);
+
+		pr_info("kek: km: %px, bus: %llu\n", buf, bus);
+		if (bus)
+			dma_unmap_single(&kek.ldev.dev, bus, 123, DMA_NONE);
+		kfree(buf);
+	}
+
+/*
+	struct dma_pool *dp = 0;
+	dp = dma_pool_create("dm_pool", &kek.ldev.dev, 123, 8, 0);
+	if (IS_ERR_OR_NULL(dp)) {
+		pr_warn("kek: fail dma_pool_create\n");
+		kfree(kek.buf);
+		device_remove_file(&kek.ldev.dev, &dev_attr_ver);
+		device_unregister(&kek.ldev.dev);
+		device_remove_file(&kek.class_dev, &dev_attr_version);
+		device_unregister(&kek.class_dev);
+		return PTR_ERR(dp);
+	}
+
+	dma_addr_t bus_addr1, bus_addr2;
+	void *addr1 = dma_pool_alloc(dp, GFP_KERNEL, &bus_addr1); 
+
+	if (!addr1) {
+		pr_warn("kek: fail dma pool alloc: %lu\n", PTR_ERR(addr1));
+	}
+
+	pr_info("kek: kmalloc: %px\nkek: dma_pool: %px\nkek: addr: %px\n\
+kek: bus_addr: %llu\n",
+			kek.buf, dp, addr1, bus_addr1);
+
+	dma_pool_destroy(dp);
+*/ // NOT WORKING
+	/*
+	void *addr;
+	dma_addr_t bus_addr;
+	u64 dma_mask = DMA_BIT_MASK(24);
+	retval = dma_set_mask_and_coherent(&kek.ldev.dev, dma_mask);
+	if (retval) {
+		pr_info("kek: %d\n", retval);
+	}
+	kek.ldev.dev.dma_mask = &dma_mask;
+	addr = dma_alloc_coherent(&kek.ldev.dev, PAGE_SIZE*2,
+			&bus_addr, GFP_KERNEL);
 	
 	if (!kek.dmabuf_virt) {
 		pr_warn("kek: fail dma_alloc_coherent\n");
@@ -105,8 +150,10 @@ static int __init kek_init(void)
 	}
 
 	pr_info("kek: kmalloc: %px\ndmabuf_virt: %px\ndmabuf: %llu\n", kek.buf,
-			kek.dmabuf_virt, kek.dmabuf);
+			addr, bus_addr);
 
+	dma_free_coherent(&kek.ldev.dev, PAGE_SIZE*2, addr, bus_addr);
+*/ // noT WORK
 	pr_info(KEKM SNL, "init");
 	return 0;
 }
@@ -115,8 +162,8 @@ static void __exit kek_exit(void)
 {
 	pr_info(KEKM SNL, "exit");
 	kfree(kek.buf);
-	dma_free_coherent(&kek.ldev.dev, PAGE_SIZE*2, kek.dmabuf_virt,
-			kek.dmabuf);
+	//dma_free_coherent(&kek.ldev.dev, PAGE_SIZE*2, kek.dmabuf_virt,
+	//		kek.dmabuf); // not work
 	device_remove_file(&kek.ldev.dev, &dev_attr_ver);
 	device_unregister(&kek.ldev.dev);
 
