@@ -11,7 +11,7 @@
 #define BUSVER "0.0.0.1"
 
 // BUS
-static int ldd_match(struct device *dev, struct device_driver *drv)
+static int ldd_match(struct device *dev, const struct device_driver *drv)
 {
 	if ((!strncmp(dev_name(dev), "kek", 3) &&
 				!strncmp(drv->name, "kek_drv", 7)) ||
