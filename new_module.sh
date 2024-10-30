@@ -48,17 +48,15 @@ chmod +x dmesg
 printf "#include <linux/module.h>
 #include <linux/init.h>
 
-#define "$UPPER_NAME" \""$NAME"\"
-#define "$UPPER_NAME"M \""$NAME": \"
-
 static int __init "$NAME"_init(void)
 {
+	pr_info(\""$NAME": inited\\\n\");
 	return 0;
 }
 
 static void __exit "$NAME"_exit(void)
 {
-	;
+	pr_info(\""$NAME": exited\\\n\");
 }
 
 module_init("$NAME"_init);
