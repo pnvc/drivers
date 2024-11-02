@@ -25,10 +25,12 @@ static int __init slist_init(void)
 	struct ls ls4 = {.name="ls4",.a=14,.b=0xffffff0fff,.c=0x34};
 
 	list_add_tail(&ls0.list, &ls_list);
+	pr_info("slist: last entry name [%s]\n", list_last_entry(&ls_list, struct ls, list)->name);
 	list_add_tail(&ls1.list, &ls_list);
 	list_add_tail(&ls2.list, &ls_list);
 	list_add_tail(&ls3.list, &ls_list);
 	list_add_tail(&ls4.list, &ls_list);
+
 
 	if (!list_empty(&ls_list)) {
 		struct list_head *tmp_list;

@@ -1,0 +1,1 @@
+dmesg | grep cb | tail -15
