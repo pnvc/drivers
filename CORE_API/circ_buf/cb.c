@@ -11,7 +11,7 @@ struct cb_data {
 	struct list_head node;
 };
 
-#define RWOFF_MAX		((PAGE_SIZE << 2) - 1)
+#define CB_DATA_SIZE		(PAGE_SIZE << 2)
 
 struct cb {
 	struct list_head data_list;
@@ -19,7 +19,7 @@ struct cb {
 	dev_t dev;
 	struct cdev cdev;
 	struct mutex mr, mw;
-	loff_t roff, woff;
+	unsigned short roff, woff;
 	wait_queue_head_t read_wait, write_wait;
 };
 
@@ -44,7 +44,7 @@ static struct cb cb = {
 	.data_list_count =	0,
 };
 
-#define data_add(data) 		list_add_tail(data->node, &cb.data_list)
+#define data_add(data) 		list_add_tail(&data->node, &cb.data_list)
 #define data_buf(data) 		data->buf
 #define data_last() 		list_last_entry(&cb.data, struct cb_data, node)
 #define data_last_buf()		data_last()->buf
@@ -54,14 +54,6 @@ static struct cb cb = {
 					cb.data_list_count--
 #define data_end()		cb.roff == cb.woff
 #define list_data(list)		list_entry(list, struct cb_data, node)
-
-static void *data_list_by_off_div(unsigned char off)
-{
-	struct list_head *list = &cb.data_list;
-	while (off--)
-		list = list->next;
-	return list_entry(list, struct cb_data, node)->buf;
-}
 
 static int cb_open(struct inode *inode, struct file *filp)
 {
@@ -76,55 +68,179 @@ static int cb_release(struct inode *inode, struct file *filp)
 static ssize_t cb_read(struct file *filp, char __user *ubuf, size_t count,
 		loff_t *offset)
 {
-	size_t count_max;
-	struct list_head *head;
-	void *buf;
-	loff_t buf_offset;
+	size_t count_max, count_now;
 	ssize_t retval = 0;
-	size_t odd = 0;
-	size_t max_read_from_page_buf = 0;
-	size_t count_now = 0;
+	unsigned char buf_num;
+	unsigned short buf_offset;
+	struct list_head *list = &cb.data_list;
+	struct cb_data *data;
+	void *buf;
+	size_t max_first_count;
 
-	while (data_end()) {
+	count_max = CIRC_CNT(cb.woff, cb.roff, CB_DATA_SIZE);
+	while (!count_max) {
 		if (filp->f_flags & O_NONBLOCK)
 			return -EAGAIN;
 
-		wait_event_interruptible(cb.read_wait, cb.roff != cb.woff);
+		pr_info("cb: read sleep\n");
+		if (wait_event_interruptible(cb.read_wait, (count_max = 
+						CIRC_CNT(cb.woff, cb.roff,
+							CB_DATA_SIZE))))
+			return -ERESTARTSYS;
+		pr_info("cb: read woke up\n");
 	}
 
 	if (mutex_lock_interruptible(&cb.mr))
 		return -ERESTARTSYS;
 
-	count_max = cb.woff < cb.roff ? RWOFF_MAX + cb.woff - cb.roff + 1
-					: cb.woff - cb.roff;
-
 	if (count > count_max)
 		count = count_max;
 
-	head = data_list_by_off_div((unsigned char)(cb.roff / PAGE_SIZE));
-	buf = data_buf(list_data(head));
+	list = list->next;
+
 	buf_offset = cb.roff % PAGE_SIZE;
+	buf_num = cb.roff / PAGE_SIZE;
+
+	while (buf_num--)
+		list = list->next;
+
+	max_first_count = PAGE_SIZE - buf_offset;
+	count_now = count > max_first_count ? max_first_count : count;
+	data = list_data(list);
+	buf = data_buf(data);
 	buf += buf_offset;
 
-	// it is useless
+	if (copy_to_user(ubuf, buf, count_now)) {
+		mutex_unlock(&cb.mr);
+		return -EFAULT;
+	}
 
+	retval += count_now;
+	count -= count_now;
+
+	while (count) {
+		count_now = count / PAGE_SIZE ? PAGE_SIZE : count;
+		list = list->next;
+		data = list_data(list);
+		buf = data_buf(data);
+		if (copy_to_user(ubuf, buf, count_now))
+			goto end; /* anyway we have some retval */
+		retval += count_now;
+		count -= count_now;
+	}
+
+end:
 	cb.roff += retval;
-
+	if (cb.roff >= CB_DATA_SIZE)
+		cb.roff = cb.roff - CB_DATA_SIZE;
+	pr_info("cb: %d %d\n", cb.woff, cb.roff);
+	wake_up_interruptible(&cb.write_wait);
 	mutex_unlock(&cb.mr);
-
 	return retval;
 }
 
 static ssize_t cb_write(struct file *filp, const char __user *ubuf,
 		size_t count, loff_t *offset)
 {
-	if (cb.roff > cb.woff)
-		wait_event_interruptible(cb.write_wait, cb.roff <= cb.woff);
-	if (mutex_lock_interruptible(&cb.mr))
+	size_t buf_space;
+	struct list_head *list = &cb.data_list;
+	struct cb_data *data;
+	void *buf;
+	ssize_t retval = 0;
+	unsigned short buf_offset;
+	unsigned char buf_num;
+	size_t max_first_count;
+	size_t count_now;
+
+	buf_space = CIRC_SPACE(cb.woff, cb.roff, CB_DATA_SIZE);
+	while (!buf_space) {
+		if (filp->f_flags & O_NONBLOCK)
+			return -EAGAIN;
+
+		if (wait_event_interruptible(cb.write_wait, (buf_space =
+						CIRC_SPACE(cb.woff, cb.roff,
+							CB_DATA_SIZE))))
+			return -ERESTARTSYS;
+	}
+
+	if (mutex_lock_interruptible(&cb.mw))
 		return -ERESTARTSYS;
+
+	if (count > buf_space)
+		count = buf_space;
+
+	if (list_empty(list)) {
+		while (count) {
+			count_now = count > PAGE_SIZE ? PAGE_SIZE : count;
+			count -= count_now;
+			data = kzalloc(sizeof(*data), GFP_KERNEL);
+			if (!data) {
+				if (retval)
+					goto end;
+				mutex_unlock(&cb.mw);
+				return -ENOMEM;
+			}
+			data_add(data);
+			buf = data_buf(data);
+			if (copy_from_user(buf, ubuf, count_now)) {
+				if (retval)
+					goto end;
+				mutex_unlock(&cb.mw);
+				return -EFAULT;
+			}
+			retval += count_now;
+		}
+		goto end;
+	}
+
+	list = list->next;
+
+	buf_offset = cb.woff % PAGE_SIZE;
+	buf_num = cb.woff / PAGE_SIZE;
+
+	while (buf_num--)
+		list = list->next;
+
+	max_first_count = PAGE_SIZE - buf_offset;
+	count_now = count > max_first_count ? max_first_count : count;
+	data = list_data(list);
+	buf = data_buf(data);
+	buf += buf_offset;
+
+	if (copy_from_user(buf, ubuf, count_now)) {
+		mutex_unlock(&cb.mw);
+		return -EFAULT;
+	}
+
+	retval += count_now;
+	count -= count_now;
+
+	while (count) {
+		count_now = count > PAGE_SIZE ? PAGE_SIZE : count;
+		
+		list = list->next;
+		if (list == &cb.data_list) {
+			data = kzalloc(sizeof(*data), GFP_KERNEL);
+			if (!data)
+				goto end;
+			list_add_tail(&data->node, list);
+		} else
+			data = list_data(list);
+		buf = data_buf(data);
+		if (copy_from_user(buf, ubuf, count_now))
+			goto end; /* anyway we have some retval */
+		retval += count_now;
+		count -= count_now;
+	}
+
+end:
+	cb.woff += retval;
+	if (cb.woff >= CB_DATA_SIZE)
+		cb.woff = cb.woff - CB_DATA_SIZE;
+	pr_info("cb: %d %d\n", cb.woff, cb.roff);
 	wake_up_interruptible(&cb.read_wait);
 	mutex_unlock(&cb.mw);
-	return count;
+	return retval;
 }
 
 static int __init cb_init(void)
@@ -152,6 +268,7 @@ static int __init cb_init(void)
 	init_waitqueue_head(&cb.read_wait);
 	init_waitqueue_head(&cb.write_wait);
 	mutex_init(&cb.mw);
+	mutex_init(&cb.mr);
 
 	pr_info("cb: inited\n");
 	return 0;
@@ -159,8 +276,17 @@ static int __init cb_init(void)
 
 static void __exit cb_exit(void)
 {
+	struct list_head *cur, *next;
+	struct cb_data *data;
 	cdev_del(&cb.cdev);
 	unregister_chrdev_region(cb.dev, 1);
+
+	list_for_each_safe(cur, next, &cb.data_list) {
+		data = list_entry(cur, struct cb_data, node);
+		list_del(cur);
+		kfree(data);
+	}
+
 	pr_info("cb: exited\n");
 }
 
