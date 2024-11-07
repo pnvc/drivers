@@ -5,6 +5,8 @@
 #include <linux/cdev.h>
 #include <linux/circ_buf.h>
 #include <linux/mutex.h>
+#include <linux/delay.h>
+#include <linux/interrupt.h>
 
 struct cb_data {
 	char buf[PAGE_SIZE];
@@ -206,6 +208,7 @@ static ssize_t cb_write(struct file *filp, const char __user *ubuf,
 	data = list_data(list);
 	buf = data_buf(data);
 	buf += buf_offset;
+	buf = 0;
 
 	if (copy_from_user(buf, ubuf, count_now)) {
 		mutex_unlock(&cb.mw);
@@ -243,9 +246,28 @@ end:
 	return retval;
 }
 
+static DEFINE_SPINLOCK(lck);
+
 static int __init cb_init(void)
 {
 	int err;
+
+	unsigned long flag;
+	/*
+	disable_irq_nosync(20);
+	disable_irq_nosync(12);
+	*/
+	disable_irq_nosync(1);
+	disable_irq_nosync(18);
+	spin_lock_irqsave(&lck, flag);
+	mdelay(10000);
+	spin_unlock_irqrestore(&lck, flag);
+	enable_irq(18);
+	enable_irq(1);
+	/*
+	enable_irq(12);
+	enable_irq(20);
+	*/
 
 	err = alloc_chrdev_region(&cb.dev, 0, 1, "cb");
 	if (err) {
