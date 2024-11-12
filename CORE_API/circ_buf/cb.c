@@ -257,6 +257,7 @@ static int __init cb_init(void)
 	disable_irq_nosync(20);
 	disable_irq_nosync(12);
 	*/
+	/*
 	disable_irq_nosync(1);
 	disable_irq_nosync(18);
 	spin_lock_irqsave(&lck, flag);
@@ -264,10 +265,13 @@ static int __init cb_init(void)
 	spin_unlock_irqrestore(&lck, flag);
 	enable_irq(18);
 	enable_irq(1);
+	*/
 	/*
 	enable_irq(12);
 	enable_irq(20);
 	*/
+
+	WARN_ON_ONCE(1);
 
 	err = alloc_chrdev_region(&cb.dev, 0, 1, "cb");
 	if (err) {
