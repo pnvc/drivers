@@ -24,6 +24,7 @@ static struct foo f2 = {
 
 static int __init xarr_init(void)
 {
+	/* create and fill xarr */
 	xa_init(&xarr);
 	xa_store(&xarr, 0, &f0, GFP_KERNEL);
 	xa_store(&xarr, 1, &f1, GFP_KERNEL);
@@ -36,6 +37,7 @@ static int __init xarr_init(void)
 
 static void __exit xarr_exit(void)
 {
+	/* destroy xarr */
 	xa_destroy(&xarr);
 	pr_info("xarr: exited\n");
 }
@@ -43,7 +45,7 @@ static void __exit xarr_exit(void)
 module_init(xarr_init);
 module_exit(xarr_exit);
 
-MODULE_AUTHOR("nx4n");
+MODULE_AUTHOR("pnvcc");
 MODULE_DESCRIPTION("XArray example ?");
 MODULE_VERSION("0.0.0.1");
 MODULE_LICENSE("GPL");
