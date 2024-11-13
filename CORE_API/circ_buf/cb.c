@@ -271,7 +271,7 @@ static int __init cb_init(void)
 	enable_irq(20);
 	*/
 
-	WARN_ON_ONCE(1);
+	//WARN_ON_ONCE(1);
 
 	err = alloc_chrdev_region(&cb.dev, 0, 1, "cb");
 	if (err) {
