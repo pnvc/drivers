@@ -7,12 +7,14 @@ static DEFINE_SPINLOCK(lck);
 static void foo(void)
 {
 	spin_lock(&lck);
+	lockdep_assert_not_held(&lck);
+	spin_unlock(&lck);
 }
 
 static int __init lck_init(void)
 {
 	unsigned long flags;
-	foo();
+	//foo();
 	pr_info("lck: inited\n");
 	return 0;
 }
