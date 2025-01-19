@@ -8,6 +8,8 @@
 #include <linux/delay.h>
 #include <linux/interrupt.h>
 
+DEFINE_PER_CPU(int, x);
+
 struct cb_data {
 	char buf[PAGE_SIZE];
 	struct list_head node;
@@ -57,8 +59,19 @@ static struct cb cb = {
 #define data_end()		cb.roff == cb.woff
 #define list_data(list)		list_entry(list, struct cb_data, node)
 
+static int asd = 1;
+
 static int cb_open(struct inode *inode, struct file *filp)
 {
+	pr_info("cb: %px\n", this_cpu_ptr(&asd));
+	mdelay(1000);
+	pr_info("cb: %px\n", this_cpu_ptr(&asd));
+	mdelay(1000);
+	pr_info("cb: %px\n", this_cpu_ptr(&asd));
+	mdelay(1000);
+	pr_info("cb: %px\n", this_cpu_ptr(&asd));
+	mdelay(1000);
+	pr_info("cb: %px\n", &asd);
 	return 0;
 }
 
@@ -256,8 +269,10 @@ static int __init cb_init(void)
 	/*
 	disable_irq_nosync(20);
 	disable_irq_nosync(12);
+	disable_irq_nosync(48);
 	*/
 	/*
+<<<<<<< Updated upstream
 	disable_irq_nosync(1);
 	disable_irq_nosync(18);
 	spin_lock_irqsave(&lck, flag);
@@ -265,9 +280,13 @@ static int __init cb_init(void)
 	spin_unlock_irqrestore(&lck, flag);
 	enable_irq(18);
 	enable_irq(1);
+=======
+	spin_lock_irqsave(&lck, flag);
+	mdelay(10000);
+	spin_unlock_irqrestore(&lck, flag);
+>>>>>>> Stashed changes
 	*/
 	/*
-	enable_irq(12);
 	enable_irq(20);
 	*/
 
